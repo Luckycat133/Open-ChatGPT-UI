@@ -4,17 +4,27 @@
 
 A modular AI chat framework for developers, providing a rich component library and feature set that enables developers to freely assemble customized AI applications.
 
-## 项目愿景
+## 项目愿景 / Project Vision
 
+### 中文版本
 Open-ChatGPT-UI旨在创建一个开源的AI应用开发生态系统，解决以下问题：
 
 - 开发者需要重复构建基础AI交互界面的浪费
 - 现有解决方案缺乏足够的灵活性和可扩展性
 - AI功能集成往往需要大量定制开发
 
-我们的目标是提供一个完整的、可自由拼装的组件库，支持从简单聊天界面到复杂智能助手的各种AI应用开发。无论你是想快速实现一个专业领域的AI助手，还是构建复杂的多功能AI平台，都能从这个项目中获益。
+我们的目标是提供一个完整的、可自由拼装的组件库，支持从简单聊天界面到复杂智能助手的各种AI应用开发。
 
-## 🚀 开发路线图
+### English Version
+Open-ChatGPT-UI aims to create an open-source ecosystem for AI application development, addressing the following issues:
+
+- Developers waste time repeatedly building basic AI interaction interfaces
+- Existing solutions lack sufficient flexibility and extensibility
+- AI feature integration often requires extensive custom development
+
+Our goal is to provide a complete, freely assemblable component library that supports various AI applications.
+
+## 🚀 开发路线图 / Development Roadmap
 
 ### 第一阶段：Web基础框架
 - 基础UI组件库开发
@@ -43,7 +53,7 @@ Open-ChatGPT-UI旨在创建一个开源的AI应用开发生态系统，解决以
 - 桌面客户端开发
 - API服务封装
 
-## 💡 技术栈讨论
+## 💡 技术栈讨论 / Technology Stack Discussion
 
 我们正在评估以下技术选项，欢迎提供你的见解：
 
@@ -67,7 +77,7 @@ Open-ChatGPT-UI旨在创建一个开源的AI应用开发生态系统，解决以
 - Next.js
 - Astro
 
-## 🤝 如何参与
+## 🤝 如何参与 / How to Contribute
 
 这个项目目前处于构思阶段，我们特别欢迎社区参与讨论和贡献想法。如果你有兴趣参与，可以：
 
