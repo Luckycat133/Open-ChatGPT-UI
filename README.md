@@ -1,6 +1,6 @@
 # Open-ChatGPT-UI
 
-[中文文档](README-zh.md) | [English Documentation](#)
+[English Documentation](#) | [中文文档](README-zh.md)
 
 A modular AI chat framework for developers, providing a rich component library and feature set that enables developers to freely assemble customized AI applications.
 
