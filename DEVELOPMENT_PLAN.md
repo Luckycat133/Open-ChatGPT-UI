@@ -2,65 +2,85 @@
 
 [English Documentation](#) | [中文文档](#)
 
-## Technology Stack
+## 1. 项目愿景与目标
 
-- Frontend: React.js with TypeScript
-- State Management: Redux Toolkit
-- UI Library: Material-UI
-- Build Tool: Vite
-- Testing: Jest + React Testing Library
-- API Client: Axios
-- Linting: ESLint + Prettier
+* **核心愿景:** 为开发者提供一个开箱即用、高度可定制、通用的 ChatGPT 风格的用户界面（UI）。
+* **主要目标:** 使开发者能够快速为其基于大语言模型（LLM）的应用集成功能完善的前端界面。
+* **价值主张:** 节省开发时间，降低前端开发门槛，提供经过验证的聊天交互模式。
 
-## Development Phases
+## 2. MVP (最简化可用版本) 范围
 
-1. Phase 1: Foundation Framework (4 weeks)
-   - Project setup and configuration
-   - Basic UI components development
-   - API service integration
-   
-2. Phase 2: Core Features (6 weeks)
-   - Chat interface implementation
-   - Message history management
-   - Prompt templates system
-   
-3. Phase 3: Advanced Features (4 weeks)
-   - User preferences and settings
-   - Multi-model support
-   - Plugin system architecture
-   
-4. Phase 4: Multi-platform Support (4 weeks)
-   - Responsive design optimization
-   - Desktop app development (Electron)
-   - Mobile app development (React Native)
+* **包含功能:**
+  1. 消息输入框与发送按钮
+  2. 对话展示区
+  3. 流式响应(SSE)
+  4. Markdown渲染
+  5. 后端连接配置
+  6. 新对话功能
+  7. 复制代码块功能
+* **暂不包含功能:**
+  - 用户认证
+  - 复杂会话历史管理
+  - 多模型支持
 
-## Feature Implementation
+## 3. 技术选型
 
-### Core Features
-- Real-time chat with streaming responses
-- Conversation history persistence
-- Markdown message rendering
-- Code syntax highlighting
+* **前端框架:** Next.js (基于 React)
+* **编程语言:** TypeScript
+* **UI 样式:** Tailwind CSS
+* **状态管理:** Zustand
+* **后端交互:** Fetch API 或 Axios
+* **流式数据处理:** EventSource API
+* **代码质量工具:** Prettier, ESLint, Husky
 
-### Advanced Features
-- Customizable UI themes
-- API key management
-- Model parameter tuning
-- Multi-language support
+## 4. 开发计划与任务分解 (MVP)
 
-## Testing & Deployment
+* **阶段 1: 项目设置与基础环境**
+  - 初始化Next.js项目
+  - 配置TypeScript和Tailwind CSS
+  - 设置代码规范工具
 
-### Testing Strategy
-- Unit testing for components and hooks
-- Integration testing for API services
-- End-to-end testing with Cypress
-- Performance benchmarking
+* **阶段 2: 核心 UI 构建**
+  - 创建基础页面布局
+  - 实现消息输入组件
+  - 实现对话展示区
 
-### Deployment Plan
-- CI/CD pipeline with GitHub Actions
-- Docker containerization
-- Vercel for frontend hosting
-- AWS Lambda for API services
+* **阶段 3: 基础交互与状态管理**
+  - 引入状态管理
+  - 实现消息发送功能
+  - 实现新对话功能
+
+* **阶段 4: 后端连接与流式响应**
+  - 配置后端API地址
+  - 实现SSE数据接收
+  - 处理流式响应
+
+* **阶段 5: 功能完善与打磨**
+  - 集成Markdown解析
+  - 添加代码高亮
+  - 实现代码复制功能
+
+## 5. 测试策略
+
+* **MVP阶段:** 主要依赖手动测试
+* **未来阶段:** 引入单元测试和端到端测试
+
+## 6. 部署策略
+
+* 提供本地运行指南
+* 提供生产构建说明
+* (推荐) 提供Dockerfile
+
+## 7. 维护与未来规划
+
+* 响应Bug报告
+* 未来功能路线图
+
+## 8. 风险与挑战
+
+* 技术复杂度
+* UI/UX设计
+* 后端兼容性
 
 ## 📄 License
 
