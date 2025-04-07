@@ -1,4 +1,6 @@
 import { Message } from '../types';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 type ChatDisplayProps = {
   messages: Message[];
@@ -17,7 +19,13 @@ export default function ChatDisplay({ messages }: ChatDisplayProps) {
               ? 'bg-blue-500 text-white' 
               : 'bg-gray-200 text-gray-800'}`}
           >
-            {message.content}
+            {message.role === 'assistant' ? (
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                {message.content}
+              </ReactMarkdown>
+            ) : (
+              message.content
+            )}
           </div>
         </div>
       ))}
