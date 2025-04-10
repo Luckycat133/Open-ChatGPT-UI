@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 
 type ChatInputProps = {
   onSendMessage: (message: string) => void;
@@ -14,7 +14,7 @@ export default function ChatInput({ onSendMessage }: ChatInputProps) {
       setMessage('');
     }
   };
-  
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -22,36 +22,62 @@ export default function ChatInput({ onSendMessage }: ChatInputProps) {
     }
   };
 
+  // Placeholder icons (replace with actual SVGs or an icon library later)
+  const PlusIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+    </svg>
+  );
+  const SearchIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+      <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+    </svg>
+  );
+  const LightBulbIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 18v-5.25m0 0a6.01 6.01 0 0 0 1.5-.189m-1.5.189a6.01 6.01 0 0 1-1.5-.189m3.75 7.478a12.06 12.06 0 0 1-7.5 0m7.5 0a12.06 12.06 0 0 0-7.5 0M12 4.5A6 6 0 0 1 18 10.5c0 1.604-.415 3.115-1.189 4.368M6 10.5A6 6 0 0 1 12 4.5c0 1.604.415 3.115 1.189 4.368m0 0a6.037 6.037 0 0 1-6.147 0M12 18.75a.75.75 0 0 1-.75-.75V16.5a.75.75 0 0 1 1.5 0v1.5a.75.75 0 0 1-.75.75Z" />
+    </svg>
+  );
+    const EllipsisHorizontalIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 12a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0ZM12.75 12a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0ZM18.75 12a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z" />
+    </svg>
+    );
+  const MicrophoneIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 18.75a6 6 0 0 0 6-6v-1.5m-6 7.5a6 6 0 0 1-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 0 1-3-3V4.5a3 3 0 1 1 6 0v8.25a3 3 0 0 1-3 3Z" />
+    </svg>
+  );
+  const SpeakerWaveIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M19.114 5.636a9 9 0 0 1 0 12.728M16.463 8.288a5.25 5.25 0 0 1 0 7.424M6.75 8.25l4.72-4.72a.75.75 0 0 1 1.28.53v15.88a.75.75 0 0 1-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.009 9.009 0 0 1 2.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75Z" />
+    </svg>
+  );
+
+
   return (
-    <form onSubmit={handleSubmit} className="fixed bottom-6 left-1/2 transform -translate-x-1/2 w-[280px] sm:w-[350px] md:w-[400px] lg:w-[450px] transition-all duration-200 ease-in-out hover:scale-[1.02]">
-      <div className="flex items-center space-x-3 bg-white rounded-xl shadow-lg px-4 py-3 border border-gray-100 hover:border-gray-200 transition-all duration-200">
-        <button
-          type="button"
-          className="p-1.5 text-gray-400 hover:text-gray-600 focus:outline-none transition-all duration-200 hover:scale-110"
-          title="Attach"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-            <path fillRule="evenodd" d="M8 4a3 3 0 00-3 3v4a5 5 0 0010 0V7a1 1 0 112 0v4a7 7 0 11-14 0V7a5 5 0 0110 0v4a3 3 0 11-6 0V7a1 1 0 012 0v4a1 1 0 102 0V7a3 3 0 00-3-3z" clipRule="evenodd" />
-          </svg>
-        </button>
+    <form onSubmit={handleSubmit} className="w-full max-w-md mx-auto">
+      <div className="flex items-center border border-gray-300 rounded-md p-1 bg-white shadow-sm">
+        {/* Decorative squares on the left */}
+        <div className="flex space-x-1 mr-2">
+          <div className="w-4 h-6 border border-gray-300 rounded-sm bg-gray-100"></div>
+          <div className="w-4 h-6 border border-gray-300 rounded-sm bg-gray-100"></div>
+          <div className="w-4 h-6 border border-gray-300 rounded-sm bg-gray-100"></div>
+          <div className="w-4 h-6 border border-gray-300 rounded-sm bg-gray-100"></div>
+        </div>
         <input
           type="text"
           value={message}
-          onChange={(e) => setMessage(e.target.value)}
           onKeyDown={handleKeyDown}
-          className="flex-1 bg-transparent focus:outline-none text-gray-800 placeholder-gray-400 text-sm md:text-base py-1.5 transition-colors duration-200"
-          placeholder="Message ChatGPT"
+          className="flex-1 bg-white focus:outline-none text-black placeholder-gray-500 text-sm md:text-base py-1 px-2"
+          placeholder="Ask anything"
           autoFocus
         />
-        <button
-          type="submit"
-          className="p-1.5 text-gray-400 hover:text-gray-600 focus:outline-none transition-all duration-200 hover:scale-110"
-          title="Search"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-            <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
-          </svg>
-        </button>
+        {/* Decorative squares on the right */}
+        <div className="flex space-x-1 ml-2">
+            <div className="w-4 h-6 border border-gray-300 rounded-sm bg-gray-100"></div>
+            <div className="w-4 h-6 border border-gray-300 rounded-sm bg-gray-100"></div>
+        </div>
       </div>
     </form>
   );

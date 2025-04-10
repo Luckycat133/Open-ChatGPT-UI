@@ -24,20 +24,21 @@ const Home: NextPage = () => {
         <meta name="description" content="An open source ChatGPT style UI" />
       </Head>
 
-      <header className="px-6 py-3 flex justify-between items-center">
-        <div className="flex items-center space-x-2">
-          <span className="text-xl font-semibold">ChatGPT</span>
-        </div>
+      {/* Keep header simple, potentially adjust styling later if needed */}
+      <header className="px-6 py-3">
+        <span className="text-lg font-medium">ChatGPT</span>
       </header>
 
-      <main className="flex-1 flex flex-col items-center justify-center px-4">
-        {messages.length === 0 && (
-          <div className="text-center mb-8">
-            <h1 className="text-4xl font-bold mb-4">What can I help with?</h1>
-          </div>
-        )}
-        <ChatDisplay messages={messages} />
+      {/* Center content vertically and horizontally */}
+      <main className="flex-1 flex flex-col items-center justify-start pt-16 px-4">
+        {/* Always display the heading */}
+        <div className="mb-6 text-center">
+          <h1 className="text-4xl font-bold">What can I help with?</h1>
+        </div>
+        {/* Place ChatInput directly below the heading */}
         <ChatInput onSendMessage={handleSendMessage} />
+        {/* ChatDisplay is removed for now to match the initial state image */}
+        {/* <ChatDisplay messages={messages} /> */}
       </main>
     </div>
   )
