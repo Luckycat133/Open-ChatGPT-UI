@@ -24,13 +24,9 @@ const Home: NextPage = () => {
         <meta name="description" content="An open source ChatGPT style UI" />
       </Head>
 
-      <header className="border-b border-gray-200 px-6 py-3 flex justify-between items-center">
+      <header className="px-6 py-3 flex justify-between items-center">
         <div className="flex items-center space-x-2">
           <span className="text-xl font-semibold">ChatGPT</span>
-        </div>
-        <div className="flex items-center space-x-4">
-          <button className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-full">Log in</button>
-          <button className="px-4 py-2 bg-black text-white rounded-full hover:bg-gray-800">Sign up</button>
         </div>
       </header>
 

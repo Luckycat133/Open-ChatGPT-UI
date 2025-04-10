@@ -14,13 +14,20 @@ export default function ChatInput({ onSendMessage }: ChatInputProps) {
       setMessage('');
     }
   };
+  
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSubmit(e as unknown as React.FormEvent);
+    }
+  };
 
   return (
-    <form onSubmit={handleSubmit} className="fixed bottom-6 left-1/2 transform -translate-x-1/2 w-[600px] bg-white rounded-[24px] shadow-lg p-4">
-      <div className="flex items-center space-x-2 bg-white rounded-[24px] border border-gray-200 px-4 py-3">
+    <form onSubmit={handleSubmit} className="fixed bottom-6 left-1/2 transform -translate-x-1/2 w-[280px] sm:w-[350px] md:w-[400px] lg:w-[450px] transition-all duration-200 ease-in-out hover:scale-[1.02]">
+      <div className="flex items-center space-x-3 bg-white rounded-xl shadow-lg px-4 py-3 border border-gray-100 hover:border-gray-200 transition-all duration-200">
         <button
           type="button"
-          className="p-1 text-gray-500 hover:text-gray-700 focus:outline-none"
+          className="p-1.5 text-gray-400 hover:text-gray-600 focus:outline-none transition-all duration-200 hover:scale-110"
           title="Attach"
         >
           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -31,38 +38,20 @@ export default function ChatInput({ onSendMessage }: ChatInputProps) {
           type="text"
           value={message}
           onChange={(e) => setMessage(e.target.value)}
-          className="flex-1 bg-transparent focus:outline-none"
-          placeholder="Ask anything"
+          onKeyDown={handleKeyDown}
+          className="flex-1 bg-transparent focus:outline-none text-gray-800 placeholder-gray-400 text-sm md:text-base py-1.5 transition-colors duration-200"
+          placeholder="Message ChatGPT"
+          autoFocus
         />
-        <div className="flex items-center space-x-2">
-          <button
-            type="button"
-            className="p-1 text-gray-500 hover:text-gray-700 focus:outline-none"
-            title="Search"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
-            </svg>
-          </button>
-          <button
-            type="button"
-            className="p-1 text-gray-500 hover:text-gray-700 focus:outline-none"
-            title="Reason"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd" />
-            </svg>
-          </button>
-          <button
-            type="button"
-            className="p-1 text-gray-500 hover:text-gray-700 focus:outline-none"
-            title="Voice"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M7 4a3 3 0 016 0v4a3 3 0 11-6 0V4zm4 10.93A7.001 7.001 0 0017 8a1 1 0 10-2 0A5 5 0 015 8a1 1 0 00-2 0 7.001 7.001 0 006 6.93V17H6a1 1 0 100 2h8a1 1 0 100-2h-3v-2.07z" clipRule="evenodd" />
-            </svg>
-          </button>
-        </div>
+        <button
+          type="submit"
+          className="p-1.5 text-gray-400 hover:text-gray-600 focus:outline-none transition-all duration-200 hover:scale-110"
+          title="Search"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+            <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
+          </svg>
+        </button>
       </div>
     </form>
   );
