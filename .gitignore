@@ -1,5 +1,9 @@
 # Logs
 logs
+rules_for_AI.md
+
+# macOS
+.DS_Store
 *.log
 npm-debug.log*
 yarn-debug.log*
@@ -7,8 +11,6 @@ yarn-error.log*
 lerna-debug.log*
 .pnpm-debug.log*
 
-# AI Rules
-rules_for_AI.md
 
 # Diagnostic reports (https://nodejs.org/api/report.html)
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
