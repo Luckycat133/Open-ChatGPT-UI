@@ -1,21 +1,10 @@
 # Open-ChatGPT-UI
 
-[English Documentation](#) | [中文文档](README-zh.md)
+[中文](README-zh.md)
 
 A modular AI chat framework for developers, providing a rich component library and feature set that enables developers to freely assemble customized AI applications.
 
-## 项目愿景 / Project Vision
-
-### 中文版本
-Open-ChatGPT-UI旨在创建一个开源的AI应用开发生态系统，解决以下问题：
-
-- 开发者需要重复构建基础AI交互界面的浪费
-- 现有解决方案缺乏足够的灵活性和可扩展性
-- AI功能集成往往需要大量定制开发
-
-我们的目标是提供一个完整的、可自由拼装的组件库，支持从简单聊天界面到复杂智能助手的各种AI应用开发。
-
-### English Version
+## Project Vision
 Open-ChatGPT-UI aims to create an open-source ecosystem for AI application development, addressing the following issues:
 
 - Developers waste time repeatedly building basic AI interaction interfaces
@@ -24,43 +13,52 @@ Open-ChatGPT-UI aims to create an open-source ecosystem for AI application devel
 
 Our goal is to provide a complete, freely assemblable component library that supports various AI applications.
 
-## 🚀 开发路线图 / Development Roadmap
 
-### 第一阶段：Web基础框架
-- 基础UI组件库开发
-- 聊天界面实现（消息列表、输入区、提示词模板）
-- OpenAI API集成
-- 会话历史管理
-- 基本设置和偏好
+Open-ChatGPT-UI aims to create an open-source ecosystem for AI application development, addressing the following issues:
 
-### 第二阶段：功能扩展
-- 支持多种AI模型接入
-- Markdown和代码渲染优化
-- 文件上传和处理
-- 对话导出功能
-- 主题自定义
+- Developers waste time repeatedly building basic AI interaction interfaces
+- Existing solutions lack sufficient flexibility and extensibility
+- AI feature integration often requires extensive custom development
 
-### 第三阶段：高级功能
-- 深度研究工具集成
-- 对话式绘图功能
-- 语音交互支持
-- 自定义Agent框架
-- 插件系统
+Our goal is to provide a complete, freely assemblable component library that supports various AI applications.
 
-### 第四阶段：多平台支持
-- 响应式设计优化
-- 移动端应用开发
-- 桌面客户端开发
-- API服务封装
+## Development Roadmap
 
-## 💡 技术栈讨论 / Technology Stack Discussion
+### Phase 1: Web Foundation
+- Basic UI component library development
+- Chat interface implementation (message list, input area, prompt templates)
+- OpenAI API integration
+- Conversation history management
+- Basic settings and preferences
+
+### Phase 2: Feature Expansion
+- Support for multiple AI model integrations
+- Markdown and code rendering optimization
+- File upload and processing
+- Conversation export functionality
+- Theme customization
+
+### Phase 3: Advanced Features
+- Deep research tool integration
+- Conversational drawing functionality
+- Voice interaction support
+- Custom Agent framework
+- Plugin system
+
+### Phase 4: Multi-platform Support
+- Responsive design optimization
+- Mobile application development
+- Desktop client development
+- API service encapsulation
+
+## Technology Stack
 
 我们正在评估以下技术选项，欢迎提供你的见解：
 
 **前端框架：**
-- React.js + TypeScript
-- Vue.js + TypeScript
-- Svelte
+- React.js + TypeScript _(React.js + TypeScript)_
+- Vue.js + TypeScript _(Vue.js + TypeScript)_
+- Svelte _(Svelte)_
 
 **UI设计系统：**
 - Tailwind CSS
@@ -77,7 +75,7 @@ Our goal is to provide a complete, freely assemblable component library that sup
 - Next.js
 - Astro
 
-## 🤝 如何参与 / How to Contribute
+## 🤝 How to Contribute
 
 这个项目目前处于构思阶段，我们特别欢迎社区参与讨论和贡献想法。如果你有兴趣参与，可以：
 
@@ -172,9 +170,9 @@ Our goal is to provide a complete, freely assemblable component library that sup
 We are evaluating the following technical options, welcome your insights:
 
 **Frontend Frameworks:**
-- React.js + TypeScript
-- Vue.js + TypeScript
-- Svelte
+- React.js + TypeScript _(React.js + TypeScript)_
+- Vue.js + TypeScript _(Vue.js + TypeScript)_
+- Svelte _(Svelte)_
 
 **UI Design Systems:**
 - Tailwind CSS
@@ -193,24 +191,24 @@ We are evaluating the following technical options, welcome your insights:
 
 ## 🤝 How to Contribute
 
-This project is currently in the conceptual stage, and we particularly welcome community participation in discussions and idea contributions. If you're interested in participating, you can:
+这个项目目前处于构思阶段，我们特别欢迎社区参与讨论和贡献想法。如果你有兴趣参与，可以：
 
-1. Share your ideas and suggestions in the Issues section
-2. Participate in technical stack and feature priority discussions in Discussions
-3. Submit PRs to add features or improvements you think are valuable
+1. 在Issues区提出你的想法和建议
+2. 在Discussions区参与技术栈和功能优先级的讨论
+3. 提交PR添加你认为有价值的功能或改进
 
 ### Contribution Guidelines
 
 We adopt Conventional Commits specification:
-- `feat:` New feature
-- `fix:` Bug fix
-- `docs:` Documentation changes
-- `style:` Formatting changes
-- `refactor:` Code refactoring
-- `test:` Adding tests
-- `chore:` Other changes
+- `feat:` 新功能 / New feature
+- `fix:` 错误修复 / Bug fix
+- `docs:` 文档更改 / Documentation changes
+- `style:` 格式更改 / Formatting changes
+- `refactor:` 代码重构 / Code refactoring
+- `test:` 添加测试 / Adding tests
+- `chore:` 其他更改 / Other changes
 
-## 📣 Open Discussion Topics
+## 📣 Discussion Topics
 
 We particularly want to hear community opinions on the following questions:
 
@@ -220,13 +218,13 @@ We particularly want to hear community opinions on the following questions:
 4. **Integration Capabilities:** Which AI models and third-party services should be prioritized for support?
 5. **Project Positioning:** Where do you think this project's greatest value lies?
 
-## 📄 License
+## 📄 许可证 / License
 
 MIT License
 
 ---
 
-**Project Status:** Planning Phase
+**项目状态 / Project Status:** 规划阶段 / Planning Phase
 
 **Project Initiator:** [Luckycat133](https://github.com/Luckycat133)
 
