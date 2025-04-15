@@ -1,5 +1,13 @@
 # Open-ChatGPT-UI
 
+## 🌍 Available Languages
+- [English](/README.md)
+- [中文](/readme/README-zh.md)
+- [Español](/readme/README-es.md)
+- [Français](/readme/README-fr.md)
+
+# Open-ChatGPT-UI
+
 [中文](README-zh.md)
 
 A modular AI chat framework for developers, providing a rich component library and feature set that enables developers to freely assemble customized AI applications.
@@ -121,6 +129,14 @@ MIT License
 让我们一起构建下一代AI应用开发框架！
 
 ---
+
+# Open-ChatGPT-UI
+
+## 🌍 Available Languages
+- [English](/README.md)
+- [中文](/readme/README-zh.md)
+- [Español](/readme/README-es.md)
+- [Français](/readme/README-fr.md)
 
 # Open-ChatGPT-UI
 
