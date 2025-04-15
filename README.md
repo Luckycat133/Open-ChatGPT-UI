@@ -2,7 +2,8 @@
 
 ## 🌍 Available Languages
 - [English](/README.md)
-- [中文](/readme/README-zh.md)
+- [简体中文](/readme/README-zh.md)
+- [繁體中文](/readme/README-zh-tw.md)
 - [Español](/readme/README-es.md)
 - [Français](/readme/README-fr.md)
 
@@ -134,7 +135,8 @@ MIT License
 
 ## 🌍 Available Languages
 - [English](/README.md)
-- [中文](/readme/README-zh.md)
+- [简体中文](/readme/README-zh.md)
+- [繁體中文](/readme/README-zh-tw.md)
 - [Español](/readme/README-es.md)
 - [Français](/readme/README-fr.md)
 
