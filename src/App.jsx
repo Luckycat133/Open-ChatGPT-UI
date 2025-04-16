@@ -2,7 +2,7 @@ import { useState } from 'react'
 import reactLogo from './assets/react.svg'
 import viteLogo from '/vite.svg'
 import './App.css'
-import ChatUI from '../ChatUI.jsx'
+import ChatUI from './ChatUI.jsx'
 
 function App() {
   const [count, setCount] = useState(0)
