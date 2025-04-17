@@ -1,12 +1,63 @@
-# React + Vite
+# Open ChatGPT UI
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+这是一个使用 React 和 Vite 构建的 ChatGPT 界面。
 
-Currently, two official plugins are available:
+## ✨ 特性
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- 基于 Vite 的快速开发环境
+- 使用 React 构建用户界面
+- 基础的聊天交互界面 (`src/ChatUI.jsx`)
+- 支持 Markdown 渲染 (待实现)
+- 支持代码高亮 (待实现)
 
-## Expanding the ESLint configuration
+## 🚀 快速开始
 
-If you are developing a production application, we recommend using TypeScript and enable type-aware lint rules. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+1.  **克隆项目**
+
+    ```bash
+    git clone https://github.com/your-username/Open-ChatGPT-UI.git
+    cd Open-ChatGPT-UI
+    ```
+
+2.  **安装依赖**
+
+    ```bash
+    npm install
+    ```
+
+3.  **配置 API 密钥**
+
+    将 `.env.example` 文件复制为 `.env`，并填入你的 OpenAI API 密钥：
+
+    ```bash
+    cp .env.example .env
+    ```
+
+    编辑 `.env` 文件：
+
+    ```
+    VITE_OPENAI_API_KEY=sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+    ```
+
+4.  **运行开发服务器**
+
+    ```bash
+    npm run dev
+    ```
+
+    在浏览器中打开 `http://localhost:5173` (或终端显示的端口)。
+
+## 🛠️ 构建
+
+```bash
+npm run build
+```
+
+## 📝 文档
+
+- [开发计划](readme/DEVELOPMENT_PLAN.md)
+- [更新日志](CHANGELOG.md)
+
+## 📄 许可证
+
+[MIT](LICENSE)
