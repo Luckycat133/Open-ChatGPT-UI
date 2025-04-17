@@ -5,66 +5,64 @@ const ChatUI = () => {
   const availableModels = [
     {
       id: 'deepseek/deepseek-chat-v3-0324:free',
-      name: 'DeepSeek Chat v3 (Free)',
+      name: 'DeepSeek Chat v3 (免费)',
       provider: 'DeepSeek',
-      description: 'DeepSeek的最新免费聊天模型，性能优越。'
+      description: 'DeepSeek最新旗舰免费聊天模型，综合性能优异，适合多场景对话。'
     },
     {
       id: 'deepseek/deepseek-r1:free',
-      name: 'DeepSeek R1 (Free)',
+      name: 'DeepSeek R1 (免费)',
       provider: 'DeepSeek',
-      description: 'DeepSeek的免费研究模型。'
-    },
-    {
-      id: 'deepseek/deepseek-v3-base:free',
-      name: 'DeepSeek v3 Base (Free)',
-      provider: 'DeepSeek',
-      description: 'DeepSeek v3 基础免费模型。'
-    },
-    {
-      id: 'deepseek/deepseek-chat:free',
-      name: 'DeepSeek Chat (Free)',
-      provider: 'DeepSeek',
-      description: 'DeepSeek的通用免费聊天模型。'
+      description: 'DeepSeek R1研究模型，适合探索和实验。'
     },
     {
       id: 'google/gemini-2.0-flash-exp:free',
-      name: 'Gemini 2.0 Flash Exp (Free)',
+      name: 'Gemini 2.0 Flash Exp (免费)',
       provider: 'Google',
-      description: 'Google的快速实验性免费模型。'
+      description: 'Google Gemini 2.0 Flash实验版，响应速度快，适合实时对话。'
     },
     {
       id: 'google/gemini-2.0-flash-thinking-exp-1219:free',
-      name: 'Gemini 2.0 Flash Thinking Exp (Free)',
+      name: 'Gemini 2.0 Flash Thinking Exp (免费)',
       provider: 'Google',
-      description: 'Google的思考型快速实验性免费模型。'
+      description: 'Google Gemini 2.0 Flash思考型实验版，适合复杂推理。'
     },
     {
       id: 'google/gemma-3-27b-it:free',
-      name: 'Gemma 3 27B IT (Free)',
+      name: 'Gemma 3 27B IT (免费)',
       provider: 'Google',
-      description: 'Google的Gemma 3系列27B参数指令调整免费模型。'
+      description: 'Google Gemma 3系列27B参数指令微调模型，适合多任务。'
     },
     {
       id: 'qwen/qwq-32b:free',
-      name: 'Qwen QWQ 32B (Free)',
+      name: 'Qwen QWQ 32B (免费)',
       provider: 'Qwen',
-      description: '阿里巴巴Qwen系列32B参数免费模型。'
+      description: '阿里巴巴Qwen QWQ 32B参数模型，中文能力突出。'
     },
     {
       id: 'meta-llama/llama-4-scout:free',
-      name: 'Llama 4 Scout (Free)',
+      name: 'Llama 4 Scout (免费)',
       provider: 'Meta Llama',
-      description: 'Meta Llama 4 Scout 免费模型。'
+      description: 'Meta Llama 4 Scout，适合日常对话和内容生成。'
     },
     {
       id: 'meta-llama/llama-4-maverick:free',
-      name: 'Llama 4 Maverick (Free)',
+      name: 'Llama 4 Maverick (免费)',
       provider: 'Meta Llama',
-      description: 'Meta Llama 4 Maverick 免费模型。'
+      description: 'Meta Llama 4 Maverick，创新型免费模型，适合多样化应用。'
     },
-    // Add other models as needed, e.g., a default fallback if none are configured
-    { id: 'openai/gpt-3.5-turbo', name: 'GPT-3.5 Turbo', provider: 'OpenAI', description: 'OpenAI的快速基础模型（可能需要配置）。' }
+    {
+      id: 'deepseek/deepseek-v3-base:free',
+      name: 'DeepSeek v3 Base (免费)',
+      provider: 'DeepSeek',
+      description: 'DeepSeek v3基础免费模型，适合基础任务。'
+    },
+    {
+      id: 'deepseek/deepseek-chat:free',
+      name: 'DeepSeek Chat (免费)',
+      provider: 'DeepSeek',
+      description: 'DeepSeek通用免费聊天模型，适合日常对话。'
+    }
   ];
 
   // Group models by provider
