@@ -1,6 +1,18 @@
-import React from "react";
+import React, { useEffect } from "react";
 
 const ChatUI = () => {
+  useEffect(() => {
+    // Read the API key from environment variables
+    const apiKey = import.meta.env.VITE_OPENROUTER_API_KEY;
+    if (!apiKey || apiKey === 'YOUR_OPENROUTER_API_KEY_HERE') {
+      console.warn("OpenRouter API Key not configured. Please set VITE_OPENROUTER_API_KEY in your .env file.");
+      // You might want to disable API-dependent features or show a message to the user here.
+    } else {
+      console.log("OpenRouter API Key loaded successfully.");
+      // Use the apiKey for your API calls
+    }
+  }, []);
+
   return (
     <div style={{
       display: "flex",
