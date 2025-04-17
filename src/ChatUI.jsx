@@ -99,7 +99,7 @@ const ChatUI = () => {
     const body = JSON.stringify({
       model: selectedModel,
       messages: [...messages, newUserMessage].map(({ role, content }) => ({ role, content })), // Send history + new message
-      stream: false, // Keep it simple for now, no streaming
+      stream: true, // Enable streaming
     });
 
     try {
@@ -110,28 +110,94 @@ const ChatUI = () => {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        console.error("API Error:", errorData);
-        throw new Error(`API request failed with status ${response.status}: ${errorData.error?.message || 'Unknown error'}`);
+        // Attempt to read error details from the response body
+        let errorDetails = 'Unknown error';
+        try {
+          const errorData = await response.json();
+          errorDetails = errorData.error?.message || JSON.stringify(errorData);
+        } catch (e) {
+          errorDetails = await response.text(); // Fallback to plain text
+        }
+        console.error("API Error Status:", response.status);
+        console.error("API Error Details:", errorDetails);
+        throw new Error(`API request failed with status ${response.status}: ${errorDetails}`);
       }
 
-      const data = await response.json();
-      const assistantMessage = data.choices[0]?.message;
-
-      if (assistantMessage) {
-        setMessages((prevMessages) => [...prevMessages, assistantMessage]);
-      } else {
-        throw new Error("Invalid response format from API");
+      // Handle streaming response
+      if (!response.body) {
+        throw new Error("Streaming response not supported or body is null.");
       }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let accumulatedContent = "";
+      let currentAssistantMessageIndex = -1;
+
+      // Add a placeholder for the assistant's message
+      setMessages((prevMessages) => {
+        const newMessages = [...prevMessages, { role: "assistant", content: "" }];
+        currentAssistantMessageIndex = newMessages.length - 1;
+        return newMessages;
+      });
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value, { stream: true });
+        const lines = chunk.split('\n').filter(line => line.trim() !== '');
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const dataStr = line.substring(6);
+            if (dataStr === '[DONE]') {
+              break; // Stream finished
+            }
+            try {
+              const data = JSON.parse(dataStr);
+              const delta = data.choices[0]?.delta?.content;
+              if (delta) {
+                accumulatedContent += delta;
+                // Update the content of the current assistant message
+                setMessages((prevMessages) => {
+                  const updatedMessages = [...prevMessages];
+                  if (currentAssistantMessageIndex !== -1 && updatedMessages[currentAssistantMessageIndex]) {
+                    updatedMessages[currentAssistantMessageIndex].content = accumulatedContent;
+                  }
+                  return updatedMessages;
+                });
+              }
+            } catch (e) {
+              console.error('Error parsing stream data:', e, 'Data string:', dataStr);
+            }
+          }
+        }
+      }
+
     } catch (error) {
       console.error('Failed to send message:', error);
-      setMessages((prevMessages) => [
-        ...prevMessages,
-        {
-          role: "assistant",
-          content: `抱歉，发送消息时出错：${error.message}`,
-        },
-      ]);
+      // Add error message to chat, ensuring it doesn't overwrite the placeholder if streaming started
+      setMessages((prevMessages) => {
+          // If the last message is an empty assistant message (placeholder), remove it
+          if (prevMessages[prevMessages.length - 1]?.role === 'assistant' && prevMessages[prevMessages.length - 1]?.content === '') {
+              return [
+                  ...prevMessages.slice(0, -1),
+                  {
+                      role: "assistant",
+                      content: `抱歉，处理消息时出错：${error.message}`,
+                  },
+              ];
+          } else {
+              // Otherwise, just append the error message
+              return [
+                  ...prevMessages,
+                  {
+                      role: "assistant",
+                      content: `抱歉，发送消息时出错：${error.message}`,
+                  },
+              ];
+          }
+      });
     } finally {
       setIsLoading(false);
     }

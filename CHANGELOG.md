@@ -7,7 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
+- Implemented streaming support for AI responses in `src/ChatUI.jsx`.
 - Reviewed detailed OpenRouter API documentation regarding model routing, streaming, multimodal support, and response formats.
+### Changed
+- Updated default model to `deepseek/deepseek-chat` in `.env`.
 
 ## [0.1.1] - 2025-04-18
 ### Changed
