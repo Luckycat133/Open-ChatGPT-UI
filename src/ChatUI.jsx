@@ -1,6 +1,78 @@
 import React, { useState, useEffect, useRef } from "react";
 
 const ChatUI = () => {
+  // Define the available models with descriptions and providers
+  const availableModels = [
+    {
+      id: 'deepseek/deepseek-chat-v3-0324:free',
+      name: 'DeepSeek Chat v3 (Free)',
+      provider: 'DeepSeek',
+      description: 'DeepSeek的最新免费聊天模型，性能优越。'
+    },
+    {
+      id: 'deepseek/deepseek-r1:free',
+      name: 'DeepSeek R1 (Free)',
+      provider: 'DeepSeek',
+      description: 'DeepSeek的免费研究模型。'
+    },
+    {
+      id: 'deepseek/deepseek-v3-base:free',
+      name: 'DeepSeek v3 Base (Free)',
+      provider: 'DeepSeek',
+      description: 'DeepSeek v3 基础免费模型。'
+    },
+    {
+      id: 'deepseek/deepseek-chat:free',
+      name: 'DeepSeek Chat (Free)',
+      provider: 'DeepSeek',
+      description: 'DeepSeek的通用免费聊天模型。'
+    },
+    {
+      id: 'google/gemini-2.0-flash-exp:free',
+      name: 'Gemini 2.0 Flash Exp (Free)',
+      provider: 'Google',
+      description: 'Google的快速实验性免费模型。'
+    },
+    {
+      id: 'google/gemini-2.0-flash-thinking-exp-1219:free',
+      name: 'Gemini 2.0 Flash Thinking Exp (Free)',
+      provider: 'Google',
+      description: 'Google的思考型快速实验性免费模型。'
+    },
+    {
+      id: 'google/gemma-3-27b-it:free',
+      name: 'Gemma 3 27B IT (Free)',
+      provider: 'Google',
+      description: 'Google的Gemma 3系列27B参数指令调整免费模型。'
+    },
+    {
+      id: 'qwen/qwq-32b:free',
+      name: 'Qwen QWQ 32B (Free)',
+      provider: 'Qwen',
+      description: '阿里巴巴Qwen系列32B参数免费模型。'
+    },
+    {
+      id: 'meta-llama/llama-4-scout:free',
+      name: 'Llama 4 Scout (Free)',
+      provider: 'Meta Llama',
+      description: 'Meta Llama 4 Scout 免费模型。'
+    },
+    {
+      id: 'meta-llama/llama-4-maverick:free',
+      name: 'Llama 4 Maverick (Free)',
+      provider: 'Meta Llama',
+      description: 'Meta Llama 4 Maverick 免费模型。'
+    },
+    // Add other models as needed, e.g., a default fallback if none are configured
+    { id: 'openai/gpt-3.5-turbo', name: 'GPT-3.5 Turbo', provider: 'OpenAI', description: 'OpenAI的快速基础模型（可能需要配置）。' }
+  ];
+
+  // Group models by provider
+  const groupedModels = availableModels.reduce((acc, model) => {
+    (acc[model.provider] = acc[model.provider] || []).push(model);
+    return acc;
+  }, {});
+
   const [selectedModel, setSelectedModel] = useState(''); // Add state for selected model
   const [messages, setMessages] = useState([]); // Add state for chat messages
   const [inputMessage, setInputMessage] = useState(''); // Add state for input field
@@ -23,8 +95,9 @@ const ChatUI = () => {
     const openaiApiKey = import.meta.env.VITE_OPENAI_API_KEY;
     const defaultModel = import.meta.env.VITE_DEFAULT_MODEL;
 
-    // Set the initial model based on environment variable or a fallback
-    setSelectedModel(defaultModel || 'openai/gpt-3.5-turbo'); // Use env var or a fallback like gpt-3.5
+    // Set the initial model based on environment variable or the first available model
+    const initialModelId = defaultModel || (availableModels.length > 0 ? availableModels[0].id : '');
+    setSelectedModel(initialModelId);
 
     console.log("Environment Variables Check:");
     console.log("  OpenRouter API Key:", openRouterApiKey && openRouterApiKey !== 'YOUR_OPENROUTER_API_KEY_HERE' ? 'Loaded' : 'Not Configured');
@@ -263,26 +336,24 @@ const ChatUI = () => {
               padding: "4px 16px",
               marginLeft: 8,
               background: "#fff",
-              cursor: 'pointer'
+              cursor: 'pointer',
+              maxWidth: '250px', // Limit width to prevent overflow
+              textOverflow: 'ellipsis' // Add ellipsis for long names
             }}
-            value={selectedModel} // Bind value to state
-            onChange={(e) => setSelectedModel(e.target.value)} // Update state on change
+            value={selectedModel}
+            onChange={(e) => setSelectedModel(e.target.value)}
+            disabled={isLoading}
+            title={availableModels.find(m => m.id === selectedModel)?.description || '选择一个模型'}
           >
-            {/* Populate options dynamically or keep static for now */}
-            {/* Ensure the initially selected model is in the list */}
-            {selectedModel && ![
-              'openai/gpt-4o',
-              'openai/gpt-3.5-turbo',
-              'anthropic/claude-3-haiku',
-              'anthropic/claude-3-sonnet'
-            ].includes(selectedModel) && (
-              <option value={selectedModel}>{selectedModel.split('/').pop() || selectedModel}</option>
-            )}
-            <option value="openai/gpt-4o">GPT-4o</option>
-            <option value="openai/gpt-3.5-turbo">GPT-3.5 Turbo</option>
-            <option value="anthropic/claude-3-haiku">Claude 3 Haiku</option>
-            <option value="anthropic/claude-3-sonnet">Claude 3 Sonnet</option>
-            {/* Add more models as needed */}
+            {Object.entries(groupedModels).map(([provider, models]) => (
+              <optgroup label={provider} key={provider}>
+                {models.map((model) => (
+                  <option key={model.id} value={model.id} title={model.description}>
+                    {model.name}
+                  </option>
+                ))}
+              </optgroup>
+            ))}
           </select>
         </div>
         {/* 右上角：占位符 */}
