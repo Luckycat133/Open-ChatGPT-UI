@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { v4 as uuidv4 } from 'uuid'; // Import uuid for generating unique IDs
 
 const ChatUI = () => {
   // Define the available models with descriptions and providers
@@ -72,11 +73,61 @@ const ChatUI = () => {
   }, {});
 
   const [selectedModel, setSelectedModel] = useState(''); // Add state for selected model
-  const [messages, setMessages] = useState([]); // Add state for chat messages
+  // const [messages, setMessages] = useState([]); // Remove single message state
   const [inputMessage, setInputMessage] = useState(''); // Add state for input field
   const [isLoading, setIsLoading] = useState(false); // Add state for loading indicator
   const messagesEndRef = useRef(null); // Ref for scrolling to bottom
 
+  // State for managing multiple conversations
+  const [conversations, setConversations] = useState([]);
+  const [currentConversationId, setCurrentConversationId] = useState(null);
+
+  // Helper function to get the current conversation's messages
+  const getCurrentMessages = () => {
+    const currentConversation = conversations.find(conv => conv.id === currentConversationId);
+    return currentConversation ? currentConversation.messages : [];
+  };
+
+  // Helper function to update messages for the current conversation
+  const updateCurrentMessages = (newMessages) => {
+    setConversations(prevConversations =>
+      prevConversations.map(conv =>
+        conv.id === currentConversationId
+          ? { ...conv, messages: typeof newMessages === 'function' ? newMessages(conv.messages) : newMessages }
+          : conv
+      )
+    );
+  };
+
++ // Function to create a new conversation
++ const handleNewConversation = () => {
++   const newConvId = uuidv4();
++   const defaultModelEnv = import.meta.env.VITE_DEFAULT_MODEL;
++   const initialModelId = defaultModelEnv || (availableModels.length > 0 ? availableModels[0].id : '');
++   setConversations(prevConversations => [
++     ...prevConversations,
++     {
++       id: newConvId,
++       title: "新对话",
++       messages: [
++         {
++           role: "assistant",
++           content: "你好！有什么可以帮你的吗？",
++         },
++       ],
++       model: initialModelId // Use default or first available model
++     }
++   ]);
++   setCurrentConversationId(newConvId);
++   setSelectedModel(initialModelId); // Ensure model selection updates
++ };
++
++ // Function to switch conversation
++ const handleSwitchConversation = (id) => {
++   setCurrentConversationId(id);
++   // Model selection is handled by the useEffect hook watching currentConversationId
++ };
++
   // Function to scroll to the bottom of the messages
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -84,7 +135,7 @@ const ChatUI = () => {
 
   useEffect(() => {
     scrollToBottom(); // Scroll to bottom whenever messages update
-  }, [messages]);
+  }, [conversations, currentConversationId]); // Update dependency
 
   useEffect(() => {
     // Read the API key from environment variables
@@ -103,25 +154,63 @@ const ChatUI = () => {
     console.log("  OpenAI API Key:", openaiApiKey && openaiApiKey !== 'YOUR_OPENAI_COMPATIBLE_API_KEY' ? 'Loaded' : 'Not Configured');
     console.log("  Default Model:", defaultModel ? defaultModel : 'Not Configured (using default)');
 
-    // Initial welcome message or load history
-    setMessages([
-      {
-        role: "assistant",
-        content: "你好！有什么可以帮你的吗？",
-      },
-    ]);
+    // Initialize with one default conversation or load from storage (future)
+    if (conversations.length === 0) {
+      const initialConvId = uuidv4();
+      setConversations([
+        {
+          id: initialConvId,
+          title: "新对话", // Default title
+          messages: [
+            {
+              role: "assistant",
+              content: "你好！有什么可以帮你的吗？",
+            },
+          ],
+          model: initialModelId // Store model per conversation
+        }
+      ]);
+      setCurrentConversationId(initialConvId);
+    } else if (!currentConversationId && conversations.length > 0) {
+      // If conversations exist but no current one is set, select the first one
+      setCurrentConversationId(conversations[0].id);
+    }
+    // Ensure selectedModel reflects the current conversation's model
+    const currentConv = conversations.find(c => c.id === currentConversationId);
+    if (currentConv && currentConv.model) {
+        setSelectedModel(currentConv.model);
+    } else if (initialModelId) {
+        setSelectedModel(initialModelId);
+    }
 
-  }, []);
+  }, []); // Keep initial load dependency empty for now
+
+  // Update selectedModel when currentConversationId changes
+  useEffect(() => {
+    const currentConv = conversations.find(c => c.id === currentConversationId);
+    if (currentConv && currentConv.model) {
+      setSelectedModel(currentConv.model);
+    } else {
+      // Fallback if the conversation or its model isn't found (e.g., during init)
+      const defaultModelEnv = import.meta.env.VITE_DEFAULT_MODEL;
+      const initialModelId = defaultModelEnv || (availableModels.length > 0 ? availableModels[0].id : '');
+      setSelectedModel(initialModelId);
+    }
+  }, [currentConversationId, conversations, availableModels]);
 
   const handleSendMessage = async () => {
-    if (!inputMessage.trim() || isLoading) return;
+    if (!inputMessage.trim() || isLoading || !currentConversationId) return;
 
     const newUserMessage = {
       role: "user",
       content: inputMessage.trim(),
     };
 
-    setMessages((prevMessages) => [...prevMessages, newUserMessage]);
+    // Get current messages before updating state
+    const currentMessages = getCurrentMessages();
+
+    // Update messages for the current conversation
+    updateCurrentMessages((prevMessages) => [...prevMessages, newUserMessage]);
     setInputMessage('');
     setIsLoading(true);
 
@@ -146,7 +235,8 @@ const ChatUI = () => {
       isUsingOpenRouter = true;
     } else {
       console.error("API Key or Base URL not configured properly.");
-      setMessages((prevMessages) => [
+      // Update messages for the current conversation with error
+      updateCurrentMessages((prevMessages) => [
         ...prevMessages,
         {
           role: "assistant",
@@ -168,11 +258,15 @@ const ChatUI = () => {
     }
 
     const body = JSON.stringify({
-      model: selectedModel,
-      messages: [...messages, newUserMessage].map(({ role, content }) => ({ role, content })), // Send history + new message
+      model: selectedModel, // Use the model selected for the current conversation
+      messages: [...currentMessages, newUserMessage].map(({ role, content }) => ({ role, content })), // Send history + new message
       stream: true, // Enable streaming
     });
 
+    let assistantResponseContent = ""; // Accumulate response content
+    let assistantMessageId = uuidv4(); // Unique ID for the assistant message chunk
+    let firstChunk = true;
+    
     try {
       const response = await fetch(apiUrl, {
         method: 'POST',
@@ -195,51 +289,70 @@ const ChatUI = () => {
       }
 
       // Handle streaming response
+      // Add an empty assistant message placeholder first
+      updateCurrentMessages((prevMessages) => [
+        ...prevMessages,
+        { role: "assistant", content: "", id: assistantMessageId }, // Use the generated ID
+      ]);
+      
       if (!response.body) {
         throw new Error("Streaming response not supported or body is null.");
       }
 
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
-      let accumulatedContent = "";
-      let currentAssistantMessageIndex = -1;
+      let done = false;
+      -       let assistantResponseContent = ""; // Accumulate response content
+      -       let firstChunk = true;
 
-      // Add a placeholder for the assistant's message
-      setMessages((prevMessages) => {
-        const newMessages = [...prevMessages, { role: "assistant", content: "" }];
-        currentAssistantMessageIndex = newMessages.length - 1;
-        return newMessages;
-      });
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
+      while (!done) {
+        const { value, done: readerDone } = await reader.read();
+        done = readerDone;
         const chunk = decoder.decode(value, { stream: true });
-        const lines = chunk.split('\n').filter(line => line.trim() !== '');
 
+        // Process Server-Sent Events (SSE)
+        const lines = chunk.split('\n');
         for (const line of lines) {
           if (line.startsWith('data: ')) {
-            const dataStr = line.substring(6);
-            if (dataStr === '[DONE]') {
-              break; // Stream finished
+            const dataContent = line.substring(6);
+            if (dataContent === '[DONE]') {
+              done = true;
+              break;
             }
             try {
-              const data = JSON.parse(dataStr);
-              const delta = data.choices[0]?.delta?.content;
-              if (delta) {
-                accumulatedContent += delta;
-                // Update the content of the current assistant message
+              const json = JSON.parse(dataContent);
+              const deltaContent = json.choices?.[0]?.delta?.content;
+              if (deltaContent) {
+                assistantResponseContent += deltaContent;
+
+                // Update the last message (assistant's response) in real-time
                 setMessages((prevMessages) => {
                   const updatedMessages = [...prevMessages];
-                  if (currentAssistantMessageIndex !== -1 && updatedMessages[currentAssistantMessageIndex]) {
-                    updatedMessages[currentAssistantMessageIndex].content = accumulatedContent;
+                  if (firstChunk && updatedMessages[updatedMessages.length - 1]?.role !== "assistant") {
+                    // Add a new assistant message if it's the first chunk
+                    updatedMessages.push({ role: "assistant", content: deltaContent });
+                    firstChunk = false;
+                  } else if (updatedMessages.length > 0) {
+                    // Append to the existing assistant message
+                    const lastMessageIndex = updatedMessages.length - 1;
+                    updatedMessages[lastMessageIndex] = {
+                      ...updatedMessages[lastMessageIndex],
+                      content: assistantResponseContent,
+                    };
                   }
                   return updatedMessages;
-                });
+                  // Update the specific assistant message by its ID
+                  updateCurrentMessages((prevMessages) =>
+                    prevMessages.map((msg) =>
+                      msg.id === assistantMessageId
+                        ? { ...msg, content: assistantResponseContent }
+                        : msg
+                    )
+                  );
+                }
+              } catch (e) {
+                console.error('Error parsing stream data:', e, 'Data string:', dataStr);
               }
-            } catch (e) {
-              console.error('Error parsing stream data:', e, 'Data string:', dataStr);
             }
           }
         }
@@ -271,8 +384,101 @@ const ChatUI = () => {
       });
     } finally {
       setIsLoading(false);
-    }
-  };
+      scrollToBottom(); // Ensure scroll after loading finishes
+
+        // --- Title Generation Logic ---
+        const currentMessages = getCurrentMessages();
+        const currentConv = conversations.find(c => c.id === currentConversationId);
+        // Check if it's the first exchange (user -> assistant) and title is default
+        if (currentMessages.length === 2 && currentConv && currentConv.title === "新对话") {
+          generateConversationTitle(currentMessages);
+        }
+        // --- End Title Generation Logic ---
+      };
++   
++   // Function to generate conversation title using the LLM
++   const generateConversationTitle = async (conversationMessages) => {
++     if (!currentConversationId) return;
++   
++     console.log("Generating title for conversation:", currentConversationId);
++   
++     // Prepare messages for the title generation prompt
++     const titlePromptMessages = [
++       ...conversationMessages.slice(0, 2).map(({ role, content }) => ({ role, content })), // Use first user and assistant message
++       { role: "user", content: "请根据以上对话内容，生成一个简洁的、不超过5个字的标题。" }
++     ];
++   
++     // Determine API configuration (reuse logic from handleSendMessage)
++     const openRouterApiKey = import.meta.env.VITE_OPENROUTER_API_KEY;
++     const openaiBaseUrl = import.meta.env.VITE_OPENAI_API_BASE_URL;
++     const openaiApiKey = import.meta.env.VITE_OPENAI_API_KEY;
++     const titleModel = 'google/gemma-3-27b-it:free'; // Use a fast model for titles
++   
++     let apiUrl = '';
++     let apiKey = '';
++     let isUsingOpenRouter = false;
++   
++     if (openaiApiKey && openaiApiKey !== 'YOUR_OPENAI_COMPATIBLE_API_KEY' && openaiBaseUrl) {
++       apiUrl = `${openaiBaseUrl.replace(//$/, '')}/chat/completions`;
++       apiKey = openaiApiKey;
++     } else if (openRouterApiKey && openRouterApiKey !== 'YOUR_OPENROUTER_API_KEY_HERE') {
++       apiUrl = 'https://openrouter.ai/api/v1/chat/completions';
++       apiKey = openRouterApiKey;
++       isUsingOpenRouter = true;
++     } else {
++       console.error("API Key not configured for title generation.");
++       return; // Cannot generate title without API key
++     }
++   
++     const headers = {
++       'Content-Type': 'application/json',
++       'Authorization': `Bearer ${apiKey}`,
++     };
++     if (isUsingOpenRouter) {
++       headers['HTTP-Referer'] = window.location.origin;
++       headers['X-Title'] = 'Open ChatGPT UI (Title Gen)';
++     }
++   
++     const body = JSON.stringify({
++       model: titleModel,
++       messages: titlePromptMessages,
++       max_tokens: 20, // Limit title length
++       temperature: 0.5, // Lower temperature for more deterministic titles
++       stream: false, // No need to stream title
++     });
++   
++     try {
++       const response = await fetch(apiUrl, {
++         method: 'POST',
++         headers: headers,
++         body: body,
++       });
++   
++       if (!response.ok) {
++         const errorData = await response.json();
++         throw new Error(`Title generation API request failed: ${errorData.error?.message || response.statusText}`);
++       }
++   
++       const data = await response.json();
++       const generatedTitle = data.choices?.[0]?.message?.content?.trim().replace(/["“”]/g, ''); // Extract and clean title
++   
++       if (generatedTitle) {
++         console.log(`Generated title: "${generatedTitle}" for conversation ${currentConversationId}`);
++         // Update the conversation title
++         setConversations(prevConversations =>
++           prevConversations.map(conv =>
++             conv.id === currentConversationId
++               ? { ...conv, title: generatedTitle }
++               : conv
++           )
++         );
++       } else {
++         console.warn("Could not extract title from API response.", data);
++       }
++     } catch (error) {
++       console.error("Error generating conversation title:", error);
++       // Optionally, set a default error title or leave it as "新对话
+    };
 
   // Handle Enter key press in textarea
   const handleKeyDown = (event) => {
@@ -283,70 +489,56 @@ const ChatUI = () => {
   };
 
   return (
-    <div style={{
-      display: "flex",
-      flexDirection: "column",
-      height: "100vh",
-      background: "#f7f7f8"
-    }}>
-      {/* 顶部栏 */}
-      <div style={{
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        padding: "16px 24px 0 24px",
-        borderBottom: '1px solid #eee',
-        paddingBottom: '16px',
-        background: '#fff',
-      }}>
-        {/* 左上角：展开历史/新建对话/模型切换 */}
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <button style={{
-            borderRadius: "50%",
-            border: "none",
-            width: 36,
-            height: 36,
-            background: "#fff",
-            boxShadow: "0 1px 4px rgba(0,0,0,0.04)",
-            cursor: "pointer",
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: '20px'
-          }}>≡</button>
-          <button style={{
-            borderRadius: "50%",
-            border: "none",
-            width: 36,
-            height: 36,
-            background: "#fff",
-            boxShadow: "0 1px 4px rgba(0,0,0,0.04)",
-            cursor: "pointer",
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: '20px'
-          }}>+</button>
++   <div className="flex h-screen bg-gray-100">
++     {/* Sidebar for Conversations */}
++     <div className="w-64 bg-gray-800 text-white flex flex-col">
++       <div className="p-4 border-b border-gray-700">
++         <button
++           onClick={handleNewConversation}
++           className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded transition duration-150 ease-in-out"
++         >
++           + 新对话
++         </button>
++       </div>
++       <div className="flex-1 overflow-y-auto">
++         {conversations.map((conv) => (
++           <div
++             key={conv.id}
++             onClick={() => handleSwitchConversation(conv.id)}
++             className={`p-3 cursor-pointer hover:bg-gray-700 ${currentConversationId === conv.id ? 'bg-gray-600' : ''}`}
++           >
++             {conv.title || '对话'}
++           </div>
++         ))}
++       </div>
++       {/* Optional: Add settings or user info at the bottom */}
++     </div>
++
++     {/* Main Chat Area */}
++     <div className="flex-1 flex flex-col">
+        {/* Header with Model Selection */}
+        <div className="p-4 bg-white border-b border-gray-200 flex items-center justify-between">
+          <h1 className="text-xl font-semibold">Open ChatGPT UI</h1>
+          {/* Model Selector Dropdown */}
           <select
-            style={{
-              borderRadius: 20,
-              border: "1px solid #eee",
-              padding: "4px 16px",
-              marginLeft: 8,
-              background: "#fff",
-              cursor: 'pointer',
-              maxWidth: '250px', // Limit width to prevent overflow
-              textOverflow: 'ellipsis' // Add ellipsis for long names
-            }}
             value={selectedModel}
-            onChange={(e) => setSelectedModel(e.target.value)}
-            disabled={isLoading}
-            title={availableModels.find(m => m.id === selectedModel)?.description || '选择一个模型'}
+-           onChange={(e) => setSelectedModel(e.target.value)}
++           onChange={(e) => {
++             const newModelId = e.target.value;
++             setSelectedModel(newModelId);
++             // Update the model for the current conversation
++             setConversations(prev => prev.map(conv =>
++               conv.id === currentConversationId ? { ...conv, model: newModelId } : conv
++             ));
++           }}
+            className="p-2 border rounded bg-white shadow-sm"
+            disabled={isLoading} // Disable when loading
           >
+            <option value="" disabled>选择模型</option>
             {Object.entries(groupedModels).map(([provider, models]) => (
               <optgroup label={provider} key={provider}>
-                {models.map((model) => (
-                  <option key={model.id} value={model.id} title={model.description}>
+                {models.map(model => (
+                  <option key={model.id} value={model.id}>
                     {model.name}
                   </option>
                 ))}
@@ -354,93 +546,57 @@ const ChatUI = () => {
             ))}
           </select>
         </div>
-        {/* 右上角：占位符 */}
-        <div></div> {/* Placeholder to balance the layout */}
-      </div>
-      {/* 对话区 */}
-      <div style={{
-        flex: 1,
-        overflowY: "auto", // Make message area scrollable
-        padding: "24px 24px 0 24px"
-      }}>
-        <div style={{ maxWidth: 800, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 18 }}>
-          {/* 消息列表 */}
-          {messages.map((msg, index) => (
-            <div key={index} style={{ display: "flex", justifyContent: msg.role === "user" ? "flex-end" : "flex-start" }}>
-              <div style={{
-                background: msg.role === "user" ? "#222" : "#f3f6fc",
-                color: msg.role === "user" ? "#fff" : "#222",
-                borderRadius: msg.role === "user" ? "18px 18px 4px 18px" : "18px 18px 18px 4px",
-                padding: "12px 18px",
-                maxWidth: "80%",
-                fontSize: 16,
-                boxShadow: "0 1px 4px rgba(0,0,0,0.04)",
-                whiteSpace: 'pre-wrap', // Preserve whitespace and newlines
-                wordWrap: 'break-word', // Break long words
-              }}>
-                {msg.content}
+
+        {/* Message Display Area */}
+        <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50">
+-         {messages.map((msg, index) => (
++         {getCurrentMessages().map((msg, index) => (
+            <div
+              key={msg.id || index} // Use message ID if available, otherwise index
+              className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+            >
+              <div
+                className={`max-w-xl lg:max-w-2xl px-4 py-2 rounded-lg shadow ${msg.role === 'user' ? 'bg-blue-500 text-white' : 'bg-white text-gray-800'}`}
+              >
+                {/* Basic Markdown rendering (e.g., newlines) */}
+                <div style={{ whiteSpace: 'pre-wrap' }}>{msg.content}</div>
               </div>
             </div>
           ))}
-          {/* Add ref to the last element for scrolling */}
-          <div ref={messagesEndRef} />
+          {isLoading && (
+            <div className="flex justify-start">
+              <div className="px-4 py-2 rounded-lg shadow bg-white text-gray-500">
+                思考中...
+              </div>
+            </div>
+          )}
+          <div ref={messagesEndRef} /> {/* Anchor for scrolling */}
         </div>
-      </div>
-      {/* 输入区 */}
-      <div style={{
-        padding: "16px 24px",
-        borderTop: "1px solid #f0f0f0",
-        background: "#fff", // Changed background for better contrast
-      }}>
-        <div style={{
-          display: "flex",
-          alignItems: "center",
-          maxWidth: 800,
-          margin: '0 auto',
-          background: '#f4f4f5', // Input area background
-          borderRadius: 12,
-          padding: '4px 4px 4px 16px'
-        }}>
-          <textarea
-            value={inputMessage}
-            onChange={(e) => setInputMessage(e.target.value)}
-            onKeyDown={handleKeyDown} // Add keydown handler
-            placeholder="输入消息... (Shift+Enter 换行)"
-            rows={1} // Start with one row
-            style={{
-              flex: 1,
-              border: "none",
-              outline: "none",
-              resize: "none",
-              fontSize: 16,
-              background: 'transparent',
-              maxHeight: '150px', // Limit max height
-              overflowY: 'auto', // Allow scrolling if needed
-              lineHeight: '1.5'
-            }}
-          />
-          <button
-            onClick={handleSendMessage}
-            disabled={isLoading || !inputMessage.trim()} // Disable when loading or input is empty
-            style={{
-              marginLeft: 12,
-              border: "none",
-              background: isLoading || !inputMessage.trim() ? "#ccc" : "#222",
-              color: "#fff",
-              borderRadius: 8,
-              padding: "10px 16px",
-              cursor: isLoading || !inputMessage.trim() ? "not-allowed" : "pointer",
-              fontSize: 16,
-              opacity: isLoading || !inputMessage.trim() ? 0.6 : 1,
-              transition: 'background-color 0.2s ease'
-            }}
-          >
-            {isLoading ? "发送中..." : "发送"}
-          </button>
+
+        {/* Input Area */}
+        <div className="p-4 bg-white border-t border-gray-200">
+          <div className="flex items-center space-x-2">
+            <textarea
+              className="flex-1 p-2 border rounded-md resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+              rows="3"
+              placeholder="输入消息..."
+              value={inputMessage}
+              onChange={(e) => setInputMessage(e.target.value)}
+              onKeyDown={handleKeyDown}
+              disabled={isLoading || !currentConversationId} // Disable if no conversation selected
+            />
+            <button
+              className={`px-4 py-2 rounded-md text-white font-semibold transition duration-150 ease-in-out ${isLoading || !inputMessage.trim() || !currentConversationId ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-500 hover:bg-blue-600'}`}
+              onClick={handleSendMessage}
+              disabled={isLoading || !inputMessage.trim() || !currentConversationId}
+            >
+              发送
+            </button>
+          </div>
         </div>
-      </div>
-    </div>
++     </div>
++   </div>
   );
-};
+ };
 
 export default ChatUI;
