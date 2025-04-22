@@ -2,6 +2,10 @@ import React, { useState, useEffect, useRef } from "react";
 import { v4 as uuidv4 } from 'uuid'; // Import uuid for generating unique IDs
 
 const ChatUI = () => {
+  // --- TEMPORARY SIMPLIFICATION FOR DEBUGGING ---
+  return <h1>Chat UI Component Loaded</h1>;
+  // --- END TEMPORARY SIMPLIFICATION ---
+
   // Define the available models with descriptions and providers
   const availableModels = [
     {
@@ -99,35 +103,35 @@ const ChatUI = () => {
     );
   };
 
-+ // Function to create a new conversation
-+ const handleNewConversation = () => {
-+   const newConvId = uuidv4();
-+   const defaultModelEnv = import.meta.env.VITE_DEFAULT_MODEL;
-+   const initialModelId = defaultModelEnv || (availableModels.length > 0 ? availableModels[0].id : '');
-+   setConversations(prevConversations => [
-+     ...prevConversations,
-+     {
-+       id: newConvId,
-+       title: "新对话",
-+       messages: [
-+         {
-+           role: "assistant",
-+           content: "你好！有什么可以帮你的吗？",
-+         },
-+       ],
-+       model: initialModelId // Use default or first available model
-+     }
-+   ]);
-+   setCurrentConversationId(newConvId);
-+   setSelectedModel(initialModelId); // Ensure model selection updates
-+ };
-+
-+ // Function to switch conversation
-+ const handleSwitchConversation = (id) => {
-+   setCurrentConversationId(id);
-+   // Model selection is handled by the useEffect hook watching currentConversationId
-+ };
-+
+  // Function to create a new conversation
+  const handleNewConversation = () => {
+    const newConvId = uuidv4();
+    const defaultModelEnv = import.meta.env.VITE_DEFAULT_MODEL;
+    const initialModelId = defaultModelEnv || (availableModels.length > 0 ? availableModels[0].id : '');
+    setConversations(prevConversations => [
+      ...prevConversations,
+      {
+        id: newConvId,
+        title: "新对话",
+        messages: [
+          {
+            role: "assistant",
+            content: "你好！有什么可以帮你的吗？",
+          },
+        ],
+        model: initialModelId // Use default or first available model
+      }
+    ]);
+    setCurrentConversationId(newConvId);
+    setSelectedModel(initialModelId); // Ensure model selection updates
+  };
+
+  // Function to switch conversation
+  const handleSwitchConversation = (id) => {
+    setCurrentConversationId(id);
+    // Model selection is handled by the useEffect hook watching currentConversationId
+  };
+
   // Function to scroll to the bottom of the messages
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -294,191 +298,195 @@ const ChatUI = () => {
         ...prevMessages,
         { role: "assistant", content: "", id: assistantMessageId }, // Use the generated ID
       ]);
-      
-      if (!response.body) {
-        throw new Error("Streaming response not supported or body is null.");
-      }
 
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
       let done = false;
-      -       let assistantResponseContent = ""; // Accumulate response content
-      -       let firstChunk = true;
+      let buffer = '';
 
       while (!done) {
         const { value, done: readerDone } = await reader.read();
         done = readerDone;
         const chunk = decoder.decode(value, { stream: true });
+        buffer += chunk;
 
         // Process Server-Sent Events (SSE)
-        const lines = chunk.split('\n');
-        for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            const dataContent = line.substring(6);
-            if (dataContent === '[DONE]') {
-              done = true;
-              break;
+        let boundary = buffer.indexOf('\n\n');
+        while (boundary !== -1) {
+          const eventString = buffer.substring(0, boundary);
+          buffer = buffer.substring(boundary + 2);
+
+          if (eventString.startsWith('data: ')) {
+            const dataString = eventString.substring(6).trim();
+            if (dataString === '[DONE]') {
+              // Stream finished
+              setIsLoading(false);
+              break; // Exit inner loop, outer loop will check 'done'
             }
             try {
-              const json = JSON.parse(dataContent);
-              const deltaContent = json.choices?.[0]?.delta?.content;
-              if (deltaContent) {
-                assistantResponseContent += deltaContent;
-
-                // Update the last message (assistant's response) in real-time
-                setMessages((prevMessages) => {
-                  const updatedMessages = [...prevMessages];
-                  if (firstChunk && updatedMessages[updatedMessages.length - 1]?.role !== "assistant") {
-                    // Add a new assistant message if it's the first chunk
-                    updatedMessages.push({ role: "assistant", content: deltaContent });
-                    firstChunk = false;
-                  } else if (updatedMessages.length > 0) {
-                    // Append to the existing assistant message
-                    const lastMessageIndex = updatedMessages.length - 1;
-                    updatedMessages[lastMessageIndex] = {
-                      ...updatedMessages[lastMessageIndex],
-                      content: assistantResponseContent,
-                    };
-                  }
-                  return updatedMessages;
-                  // Update the specific assistant message by its ID
-                  updateCurrentMessages((prevMessages) =>
-                    prevMessages.map((msg) =>
-                      msg.id === assistantMessageId
-                        ? { ...msg, content: assistantResponseContent }
-                        : msg
-                    )
-                  );
-                }
-              } catch (e) {
-                console.error('Error parsing stream data:', e, 'Data string:', dataStr);
+              const jsonData = JSON.parse(dataString);
+              const delta = jsonData.choices?.[0]?.delta?.content;
+              if (delta) {
+                assistantResponseContent += delta;
+                updateCurrentMessages((prevMessages) =>
+                  prevMessages.map((msg) =>
+                    msg.id === assistantMessageId
+                      ? { ...msg, content: assistantResponseContent }
+                      : msg
+                  )
+                );
               }
+            } catch (e) {
+              console.error("Error parsing JSON chunk:", e, "Chunk:", dataString);
             }
           }
+          boundary = buffer.indexOf('\n\n');
         }
       }
+      // Ensure any remaining buffer content (if stream ends without 
+
+) is processed if needed
+      // (Usually not necessary for well-formed SSE, but good practice)
 
     } catch (error) {
-      console.error('Failed to send message:', error);
-      // Add error message to chat, ensuring it doesn't overwrite the placeholder if streaming started
-      setMessages((prevMessages) => {
-          // If the last message is an empty assistant message (placeholder), remove it
-          if (prevMessages[prevMessages.length - 1]?.role === 'assistant' && prevMessages[prevMessages.length - 1]?.content === '') {
-              return [
-                  ...prevMessages.slice(0, -1),
-                  {
-                      role: "assistant",
-                      content: `抱歉，处理消息时出错：${error.message}`,
-                  },
-              ];
-          } else {
-              // Otherwise, just append the error message
-              return [
-                  ...prevMessages,
-                  {
-                      role: "assistant",
-                      content: `抱歉，发送消息时出错：${error.message}`,
-                  },
-              ];
-          }
+      console.error("Error sending message:", error);
+      // Update the specific assistant message with the error, or add a new one if placeholder doesn't exist
+      updateCurrentMessages((prevMessages) => {
+        const existingMessageIndex = prevMessages.findIndex(msg => msg.id === assistantMessageId);
+        if (existingMessageIndex !== -1) {
+          // If the placeholder exists, update it with the error
+          const updatedMessages = [...prevMessages];
+          updatedMessages[existingMessageIndex] = {
+            ...updatedMessages[existingMessageIndex],
+            content: `抱歉，处理消息时出错：${error.message}`,
+          };
+          return updatedMessages;
+        } else {
+          // If streaming didn't even start (no placeholder), add a new error message
+          return [
+            ...prevMessages,
+            {
+              role: "assistant",
+              content: `抱歉，发送消息时出错：${error.message}`,
+              id: uuidv4() // Give the new error message an ID
+            },
+          ];
+        }
       });
     } finally {
       setIsLoading(false);
       scrollToBottom(); // Ensure scroll after loading finishes
 
-        // --- Title Generation Logic ---
-        const currentMessages = getCurrentMessages();
-        const currentConv = conversations.find(c => c.id === currentConversationId);
-        // Check if it's the first exchange (user -> assistant) and title is default
-        if (currentMessages.length === 2 && currentConv && currentConv.title === "新对话") {
-          generateConversationTitle(currentMessages);
-        }
-        // --- End Title Generation Logic ---
-      };
-+   
-+   // Function to generate conversation title using the LLM
-+   const generateConversationTitle = async (conversationMessages) => {
-+     if (!currentConversationId) return;
-+   
-+     console.log("Generating title for conversation:", currentConversationId);
-+   
-+     // Prepare messages for the title generation prompt
-+     const titlePromptMessages = [
-+       ...conversationMessages.slice(0, 2).map(({ role, content }) => ({ role, content })), // Use first user and assistant message
-+       { role: "user", content: "请根据以上对话内容，生成一个简洁的、不超过5个字的标题。" }
-+     ];
-+   
-+     // Determine API configuration (reuse logic from handleSendMessage)
-+     const openRouterApiKey = import.meta.env.VITE_OPENROUTER_API_KEY;
-+     const openaiBaseUrl = import.meta.env.VITE_OPENAI_API_BASE_URL;
-+     const openaiApiKey = import.meta.env.VITE_OPENAI_API_KEY;
-+     const titleModel = 'google/gemma-3-27b-it:free'; // Use a fast model for titles
-+   
-+     let apiUrl = '';
-+     let apiKey = '';
-+     let isUsingOpenRouter = false;
-+   
-+     if (openaiApiKey && openaiApiKey !== 'YOUR_OPENAI_COMPATIBLE_API_KEY' && openaiBaseUrl) {
-+       apiUrl = `${openaiBaseUrl.replace(//$/, '')}/chat/completions`;
-+       apiKey = openaiApiKey;
-+     } else if (openRouterApiKey && openRouterApiKey !== 'YOUR_OPENROUTER_API_KEY_HERE') {
-+       apiUrl = 'https://openrouter.ai/api/v1/chat/completions';
-+       apiKey = openRouterApiKey;
-+       isUsingOpenRouter = true;
-+     } else {
-+       console.error("API Key not configured for title generation.");
-+       return; // Cannot generate title without API key
-+     }
-+   
-+     const headers = {
-+       'Content-Type': 'application/json',
-+       'Authorization': `Bearer ${apiKey}`,
-+     };
-+     if (isUsingOpenRouter) {
-+       headers['HTTP-Referer'] = window.location.origin;
-+       headers['X-Title'] = 'Open ChatGPT UI (Title Gen)';
-+     }
-+   
-+     const body = JSON.stringify({
-+       model: titleModel,
-+       messages: titlePromptMessages,
-+       max_tokens: 20, // Limit title length
-+       temperature: 0.5, // Lower temperature for more deterministic titles
-+       stream: false, // No need to stream title
-+     });
-+   
-+     try {
-+       const response = await fetch(apiUrl, {
-+         method: 'POST',
-+         headers: headers,
-+         body: body,
-+       });
-+   
-+       if (!response.ok) {
-+         const errorData = await response.json();
-+         throw new Error(`Title generation API request failed: ${errorData.error?.message || response.statusText}`);
-+       }
-+   
-+       const data = await response.json();
-+       const generatedTitle = data.choices?.[0]?.message?.content?.trim().replace(/["“”]/g, ''); // Extract and clean title
-+   
-+       if (generatedTitle) {
-+         console.log(`Generated title: "${generatedTitle}" for conversation ${currentConversationId}`);
-+         // Update the conversation title
-+         setConversations(prevConversations =>
-+           prevConversations.map(conv =>
-+             conv.id === currentConversationId
-+               ? { ...conv, title: generatedTitle }
-+               : conv
-+           )
-+         );
-+       } else {
-+         console.warn("Could not extract title from API response.", data);
-+       }
-+     } catch (error) {
-+       console.error("Error generating conversation title:", error);
-+       // Optionally, set a default error title or leave it as "新对话
+      // --- Title Generation Logic ---
+      const currentMessages = getCurrentMessages(); // Get updated messages AFTER stream finishes
+      const currentConv = conversations.find(c => c.id === currentConversationId);
+      // Check if it's the first exchange (user -> assistant) and title is default
+      if (currentMessages.length >= 2 && currentMessages[currentMessages.length - 1].role === 'assistant' && currentConv && currentConv.title === "新对话") {
+         // Check if the last message is from assistant to ensure the exchange completed
+         // Pass the first two messages (initial prompt/greeting + first user message) + the latest assistant response
+         const messagesForTitle = [
+             currentMessages[0], // Initial assistant message
+             currentMessages[1], // First user message
+             currentMessages[currentMessages.length - 1] // Latest assistant response
+         ];
+         generateConversationTitle(messagesForTitle);
+      }
+      // --- End Title Generation Logic ---
+    }
+  };
+
+  // Function to generate conversation title using the LLM
+  const generateConversationTitle = async (conversationMessages) => {
+    if (!currentConversationId) return;
+
+    console.log("Generating title for conversation:", currentConversationId);
+
+    // Prepare messages for the title generation prompt
+    const titlePromptMessages = [
+      ...conversationMessages.map(({ role, content }) => ({ role, content })), // Use provided messages
+      { role: "user", content: "请根据以上对话内容，生成一个简洁的、不超过5个字的标题。" }
+    ];
+
+    // Determine API configuration (reuse logic from handleSendMessage)
+    const openRouterApiKey = import.meta.env.VITE_OPENROUTER_API_KEY;
+    const openaiBaseUrl = import.meta.env.VITE_OPENAI_API_BASE_URL;
+    const openaiApiKey = import.meta.env.VITE_OPENAI_API_KEY;
+    // Use a potentially faster/cheaper model for title generation if desired
+    const titleModel = selectedModel; // Or specify a different model like 'google/gemma-3-27b-it:free'
+
+    let apiUrl = '';
+    let apiKey = '';
+    let isUsingOpenRouter = false;
+
+    // Prioritize OpenAI-compatible endpoint if configured
+    if (openaiApiKey && openaiApiKey !== 'YOUR_OPENAI_COMPATIBLE_API_KEY' && openaiBaseUrl) {
+      apiUrl = `${openaiBaseUrl.replace(/\/$/, '')}/chat/completions`;
+      apiKey = openaiApiKey;
+    } else if (openRouterApiKey && openRouterApiKey !== 'YOUR_OPENROUTER_API_KEY_HERE') {
+      apiUrl = 'https://openrouter.ai/api/v1/chat/completions';
+      apiKey = openRouterApiKey;
+      isUsingOpenRouter = true;
+    } else {
+      console.error("API Key not configured for title generation.");
+      return; // Cannot generate title without API key
+    }
+
+    const headers = {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${apiKey}`,
     };
+    if (isUsingOpenRouter) {
+      headers['HTTP-Referer'] = window.location.origin;
+      headers['X-Title'] = 'Open ChatGPT UI (Title Gen)'; // Optional for OpenRouter
+    }
+
+    const body = JSON.stringify({
+      model: titleModel,
+      messages: titlePromptMessages,
+      max_tokens: 20, // Limit title length
+      temperature: 0.5, // Lower temperature for more deterministic titles
+      stream: false, // No need to stream title
+    });
+
+    try {
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: headers,
+        body: body,
+      });
+
+      if (!response.ok) {
+        let errorDetails = 'Unknown error';
+        try {
+            const errorData = await response.json();
+            errorDetails = errorData.error?.message || JSON.stringify(errorData);
+        } catch (e) {
+            errorDetails = await response.text(); // Fallback
+        }
+        throw new Error(`Title generation API request failed with status ${response.status}: ${errorDetails}`);
+      }
+
+      const data = await response.json();
+      const generatedTitle = data.choices?.[0]?.message?.content?.trim().replace(/["“”]/g, ''); // Extract and clean title
+
+      if (generatedTitle) {
+        console.log(`Generated title: "${generatedTitle}" for conversation ${currentConversationId}`);
+        // Update the conversation title
+        setConversations(prevConversations =>
+          prevConversations.map(conv =>
+            conv.id === currentConversationId
+              ? { ...conv, title: generatedTitle }
+              : conv
+          )
+        );
+      } else {
+        console.warn("Could not extract title from API response.", data);
+      }
+    } catch (error) {
+      console.error("Error generating conversation title:", error);
+      // Optionally, set a default error title or leave it as "新对话"
+    }
+  };
 
   // Handle Enter key press in textarea
   const handleKeyDown = (event) => {
@@ -489,56 +497,51 @@ const ChatUI = () => {
   };
 
   return (
-+   <div className="flex h-screen bg-gray-100">
-+     {/* Sidebar for Conversations */}
-+     <div className="w-64 bg-gray-800 text-white flex flex-col">
-+       <div className="p-4 border-b border-gray-700">
-+         <button
-+           onClick={handleNewConversation}
-+           className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded transition duration-150 ease-in-out"
-+         >
-+           + 新对话
-+         </button>
-+       </div>
-+       <div className="flex-1 overflow-y-auto">
-+         {conversations.map((conv) => (
-+           <div
-+             key={conv.id}
-+             onClick={() => handleSwitchConversation(conv.id)}
-+             className={`p-3 cursor-pointer hover:bg-gray-700 ${currentConversationId === conv.id ? 'bg-gray-600' : ''}`}
-+           >
-+             {conv.title || '对话'}
-+           </div>
-+         ))}
-+       </div>
-+       {/* Optional: Add settings or user info at the bottom */}
-+     </div>
-+
-+     {/* Main Chat Area */}
-+     <div className="flex-1 flex flex-col">
-        {/* Header with Model Selection */}
-        <div className="p-4 bg-white border-b border-gray-200 flex items-center justify-between">
-          <h1 className="text-xl font-semibold">Open ChatGPT UI</h1>
-          {/* Model Selector Dropdown */}
+    <div className="flex h-screen bg-gray-100">
+      {/* Sidebar for Conversations */}
+      <div className="w-64 bg-gray-800 text-white flex flex-col">
+        <div className="p-4 border-b border-gray-700">
+          <button
+            onClick={handleNewConversation}
+            className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded transition duration-150 ease-in-out"
+          >
+            + 新对话
+          </button>
+        </div>
+        <div className="flex-1 overflow-y-auto">
+          {conversations.map((conv) => (
+            <div
+              key={conv.id}
+              onClick={() => handleSwitchConversation(conv.id)}
+              className={`p-3 cursor-pointer hover:bg-gray-700 ${currentConversationId === conv.id ? 'bg-gray-600' : ''}`}
+            >
+              {conv.title || '对话'}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Main Chat Area */}
+      <div className="flex-1 flex flex-col">
+        {/* Header with Model Selector */}
+        <div className="p-4 bg-white border-b border-gray-200 flex justify-between items-center">
+          <h2 className="text-xl font-semibold">聊天</h2>
           <select
             value={selectedModel}
--           onChange={(e) => setSelectedModel(e.target.value)}
-+           onChange={(e) => {
-+             const newModelId = e.target.value;
-+             setSelectedModel(newModelId);
-+             // Update the model for the current conversation
-+             setConversations(prev => prev.map(conv =>
-+               conv.id === currentConversationId ? { ...conv, model: newModelId } : conv
-+             ));
-+           }}
+            onChange={(e) => {
+              const newModelId = e.target.value;
+              setSelectedModel(newModelId);
+              // Update the model for the current conversation
+              setConversations(prev => prev.map(conv =>
+                conv.id === currentConversationId ? { ...conv, model: newModelId } : conv
+              ));
+            }}
             className="p-2 border rounded bg-white shadow-sm"
-            disabled={isLoading} // Disable when loading
           >
-            <option value="" disabled>选择模型</option>
             {Object.entries(groupedModels).map(([provider, models]) => (
               <optgroup label={provider} key={provider}>
-                {models.map(model => (
-                  <option key={model.id} value={model.id}>
+                {models.map((model) => (
+                  <option key={model.id} value={model.id} title={model.description}>
                     {model.name}
                   </option>
                 ))}
@@ -547,19 +550,23 @@ const ChatUI = () => {
           </select>
         </div>
 
-        {/* Message Display Area */}
+        {/* Messages Display Area */}
         <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50">
--         {messages.map((msg, index) => (
-+         {getCurrentMessages().map((msg, index) => (
+          {getCurrentMessages().map((message, index) => (
             <div
-              key={msg.id || index} // Use message ID if available, otherwise index
-              className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+              key={message.id || index} // Use message.id if available, fallback to index
+              className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
             >
               <div
-                className={`max-w-xl lg:max-w-2xl px-4 py-2 rounded-lg shadow ${msg.role === 'user' ? 'bg-blue-500 text-white' : 'bg-white text-gray-800'}`}
+                className={`max-w-xl lg:max-w-2xl px-4 py-2 rounded-lg shadow ${message.role === 'user'
+                    ? 'bg-blue-500 text-white'
+                    : 'bg-white text-gray-800' // Changed assistant bubble color
+                  }`}
               >
-                {/* Basic Markdown rendering (e.g., newlines) */}
-                <div style={{ whiteSpace: 'pre-wrap' }}>{msg.content}</div>
+                {/* Basic Markdown rendering (bold, italic) - needs a library for full support */} 
+                {message.content.split('\n').map((line, i) => (
+                  <p key={i} className="whitespace-pre-wrap">{line}</p>
+                ))}
               </div>
             </div>
           ))}
@@ -570,33 +577,34 @@ const ChatUI = () => {
               </div>
             </div>
           )}
-          <div ref={messagesEndRef} /> {/* Anchor for scrolling */}
+          <div ref={messagesEndRef} /> {/* Element to scroll to */}
         </div>
 
         {/* Input Area */}
         <div className="p-4 bg-white border-t border-gray-200">
           <div className="flex items-center space-x-2">
             <textarea
-              className="flex-1 p-2 border rounded-md resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
-              rows="3"
-              placeholder="输入消息..."
               value={inputMessage}
               onChange={(e) => setInputMessage(e.target.value)}
-              onKeyDown={handleKeyDown}
-              disabled={isLoading || !currentConversationId} // Disable if no conversation selected
+              onKeyDown={handleKeyDown} // Handle Enter key
+              placeholder="输入消息... (Shift+Enter 换行)"
+              className="flex-1 p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+              rows="3" // Adjust initial height
+              disabled={isLoading}
             />
             <button
-              className={`px-4 py-2 rounded-md text-white font-semibold transition duration-150 ease-in-out ${isLoading || !inputMessage.trim() || !currentConversationId ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-500 hover:bg-blue-600'}`}
               onClick={handleSendMessage}
-              disabled={isLoading || !inputMessage.trim() || !currentConversationId}
+              className={`px-4 py-2 rounded-lg text-white font-semibold transition duration-150 ease-in-out ${isLoading ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-500 hover:bg-blue-600'}`}
+              disabled={isLoading}
             >
-              发送
+              {isLoading ? '发送中...' : '发送'}
             </button>
           </div>
         </div>
-+     </div>
-+   </div>
+      </div>
+    </div>
   );
- };
+  */ // Temporarily comment out the original return
+};
 
 export default ChatUI;
