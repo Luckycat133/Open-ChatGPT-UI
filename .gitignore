@@ -13,7 +13,7 @@ dist-ssr
 *.local
 
 # Environment variables
-.env*
+.env
 !.env.example
 
 # Yarn PnP
@@ -35,3 +35,9 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Optional build/dist folders
+build
+
+# OS generated files
+Thumbs.db

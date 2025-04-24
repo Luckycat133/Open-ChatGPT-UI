@@ -1,13 +1,317 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Vite + React</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
-</html>
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 对话界面</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            margin: 0;
+            background-color: #f4f5f7;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .chat-container {
+            width: 100%;
+            max-width: 800px; /* 最大宽度 */
+            height: 90vh; /* 视口高度的90% */
+            max-height: 700px; /* 最大高度 */
+            background-color: #ffffff;
+            border-radius: 16px; /* 圆角 */
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden; /* 确保子元素不会溢出圆角 */
+        }
+
+        /* --- 顶部栏 --- */
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 20px;
+            border-bottom: 1px solid #e0e0e0;
+            background-color: #fff; /* 确保背景色覆盖 */
+        }
+
+        .top-left, .top-right {
+            display: flex;
+            align-items: center;
+            gap: 10px; /* 元素间距 */
+        }
+
+        .icon-button, .dropdown-button, .toggle-button {
+            background-color: #f0f0f0;
+            border: none;
+            border-radius: 50%; /* 圆形按钮 */
+            width: 32px;
+            height: 32px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            font-size: 16px;
+            color: #333;
+            transition: background-color 0.2s;
+        }
+        .icon-button:hover, .dropdown-button:hover, .toggle-button:hover {
+            background-color: #e0e0e0;
+        }
+
+        .dropdown-button {
+             border-radius: 8px; /* 下拉菜单按钮稍方 */
+             width: auto;
+             padding: 0 12px;
+             font-size: 14px;
+             font-weight: 500;
+        }
+
+        .toggle-button {
+            width: auto;
+            padding: 0 12px;
+            font-size: 14px;
+            border-radius: 20px; /* 胶囊形状 */
+        }
+         /* 模拟图标 */
+        .icon-history::before { content: '☰'; }
+        .icon-new-chat::before { content: '+'; }
+        .icon-privacy::before { content: '🔒'; padding-right: 5px;}
+
+
+        /* --- 对话区域 --- */
+        .chat-area {
+            flex-grow: 1;
+            padding: 20px;
+            overflow-y: auto; /* 允许滚动 */
+            background-color: #f9f9f9;
+            display: flex;
+            flex-direction: column; /* 确保消息垂直排列 */
+            gap: 15px; /* 消息之间的间隔 */
+        }
+
+        /* --- 消息容器样式 (基于 W3Schools 示例修改) --- */
+        .message-container {
+            display: flex; /* 使用 flex 布局来控制头像和内容 */
+            max-width: 85%; /* 限制消息最大宽度 */
+            align-items: flex-end; /* 底部对齐头像和消息 */
+            gap: 10px; /* 头像和消息内容的间距 */
+        }
+
+        /* 用户消息靠右 */
+        .message-container.user {
+            align-self: flex-end;
+            flex-direction: row-reverse; /* 头像在右边 */
+        }
+
+        /* AI 消息靠左 */
+        .message-container.ai {
+            align-self: flex-start;
+            flex-direction: row; /* 头像在左边 */
+        }
+
+        /* 消息头像 */
+        .message-container img.avatar {
+            width: 40px; /* 头像大小 */
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover; /* 保持图片比例 */
+            flex-shrink: 0; /* 防止头像被压缩 */
+        }
+
+        /* 消息内容区域 */
+        .message-content {
+            padding: 10px 15px;
+            border-radius: 18px; /* 消息气泡圆角 */
+            line-height: 1.4;
+            position: relative; /* 用于定位时间戳 */
+        }
+
+         /* AI 消息样式 */
+        .message-container.ai .message-content {
+             background-color: #e9e9eb;
+             color: #333;
+             border-bottom-left-radius: 5px; /* AI消息左下角略方 */
+        }
+
+        /* 用户消息样式 */
+         .message-container.user .message-content {
+            background-color: #007bff;
+            color: white;
+            border-bottom-right-radius: 5px; /* 用户消息右下角略方 */
+        }
+
+        .message-content p {
+             margin: 0 0 5px 0; /* 段落底部留少许空间 */
+        }
+
+        /* 时间戳 */
+        .message-time {
+            font-size: 10px;
+            color: #888; /* 默认时间颜色 */
+            position: absolute; /* 相对于 message-content 定位 */
+            bottom: 5px; /* 距离底部距离 */
+        }
+        .message-container.ai .message-time {
+            left: 15px; /* AI 时间戳靠左 */
+             color: #999;
+        }
+         .message-container.user .message-time {
+            right: 15px; /* 用户时间戳靠右 */
+            color: #e0e0e0; /* 用户时间颜色浅一点 */
+        }
+        /* 调整内容区域 padding 以容纳时间戳 */
+        .message-content {
+             padding-bottom: 20px;
+        }
+
+
+        /* --- 输入区域 --- */
+        .input-area {
+            display: flex;
+            align-items: center;
+            padding: 15px 20px;
+            border-top: 1px solid #e0e0e0;
+            background-color: #ffffff;
+        }
+
+        .input-left-buttons {
+            display: flex;
+            gap: 8px; /* 按钮间距 */
+            margin-right: 10px;
+        }
+
+        .action-button {
+            background-color: #f0f0f0;
+            border: none;
+            border-radius: 8px; /* 方形圆角按钮 */
+            width: 36px;
+            height: 36px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            font-size: 18px;
+            color: #555;
+            transition: background-color 0.2s;
+        }
+        .action-button:hover {
+             background-color: #e0e0e0;
+        }
+         /* 模拟图标 */
+        .icon-upload::before { content: '↑'; font-weight: bold;}
+        .icon-search::before { content: '🔍'; }
+        .icon-reason::before { content: '💡'; }
+        .icon-mic::before { content: '🎤'; }
+        .icon-send::before { content: '➤'; font-size: 20px; transform: rotate(-45deg); display: inline-block;}
+
+
+        .chat-input {
+            flex-grow: 1;
+            border: none;
+            background-color: #f0f0f0;
+            border-radius: 20px; /* 圆角输入框 */
+            padding: 10px 18px;
+            font-size: 15px;
+            outline: none;
+            margin-right: 10px;
+        }
+        .chat-input:focus {
+             background-color: #e8e8e8;
+        }
+
+        .input-right-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .send-button {
+            background-color: #000000;
+            color: white;
+        }
+         .send-button:hover {
+            background-color: #333;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <!-- 顶部栏 -->
+        <div class="top-bar">
+            <div class="top-left">
+                <button class="icon-button icon-history" title="Toggle History"></button>
+                <button class="icon-button icon-new-chat" title="New Chat"></button>
+                <select class="dropdown-button" title="Select Model">
+                    <option>Model A</option>
+                    <option>Model B</option>
+                    <option>Model C</option>
+                </select>
+            </div>
+            <div class="top-right">
+                <button class="toggle-button" title="Toggle Privacy Mode">
+                    <span class="icon-privacy"></span>Private
+                </button>
+            </div>
+        </div>
+
+        <!-- 对话区域 -->
+        <div class="chat-area">
+            <!-- 示例对话 - AI -->
+            <div class="message-container ai">
+                 <img src="https://via.placeholder.com/40/808080/FFFFFF?text=AI" alt="AI Avatar" class="avatar">
+                 <div class="message-content">
+                     <p>你好！有什么可以帮你的吗？</p>
+                     <span class="message-time">11:00</span>
+                 </div>
+            </div>
+
+             <!-- 示例对话 - User -->
+             <div class="message-container user">
+                 <img src="https://via.placeholder.com/40/007BFF/FFFFFF?text=U" alt="User Avatar" class="avatar">
+                 <div class="message-content">
+                    <p>请帮我设计一个AI对话界面。</p>
+                    <span class="message-time">11:01</span>
+                 </div>
+            </div>
+
+             <!-- 示例对话 - AI -->
+             <div class="message-container ai">
+                 <img src="https://via.placeholder.com/40/808080/FFFFFF?text=AI" alt="AI Avatar" class="avatar">
+                 <div class="message-content">
+                    <p>当然，请告诉我你的具体要求。</p>
+                     <span class="message-time">11:02</span>
+                </div>
+            </div>
+
+            <!-- 示例对话 - User -->
+            <div class="message-container user">
+                 <img src="https://via.placeholder.com/40/007BFF/FFFFFF?text=U" alt="User Avatar" class="avatar">
+                 <div class="message-content">
+                     <p>界面中间是一个对话框，使用圆角矩形设计，右下角是发送按钮，左下角从左到右分别是上传文件，搜索和推理按钮...</p>
+                     <span class="message-time">11:03</span>
+                 </div>
+            </div>
+             <!-- 更多消息... -->
+
+        </div>
+
+        <!-- 输入区域 -->
+        <div class="input-area">
+            <div class="input-left-buttons">
+                <button class="action-button icon-upload" title="Upload"></button>
+                <button class="action-button icon-search" title="Search"></button>
+                <button class="action-button icon-reason" title="Reason"></button>
+            </div>
+            <input type="text" class="chat-input" placeholder="Ask anything...">
+            <div class="input-right-buttons">
+                 <button class="action-button icon-mic" title="Voice Input"></button>
+                 <button class="action-button send-button icon-send" title="Send"></button>
+            </div>
+        </div>
+    </div>
+</body>
+</html> 

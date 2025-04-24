@@ -16,11 +16,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Verified OpenRouter API request format in `src/ChatUI.jsx` against official documentation.
 
-## [0.1.0] - 2025-04-17
+## [0.1.0] - 2024-04-23
 
 ### Added
-- Initial project setup with Vite and React.
-- Created basic Chat UI component (`src/ChatUI.jsx`).
-- Added initial development plan (`readme/DEVELOPMENT_PLAN.md`).
-- Set up basic file structure.
-- Added this CHANGELOG.md file.
+- Initial HTML structure and basic CSS for the AI chat interface (`index.html`).
+- Display of user and AI avatars in chat messages.
+- Display of timestamps for each chat message.
+- Environment variable support using `dotenv` package.
+- `.env.example` file to provide a template for necessary environment variables (e.g., API keys).
+- `.gitignore` file to exclude sensitive files (`.env`) and build artifacts (`node_modules`) from version control.
+
+### Changed
+- Refined chat message styling for clearer visual separation and layout.
+
+### Security
+- Configured `.gitignore` to prevent accidental committing of the `.env` file containing API keys.
