@@ -12,9 +12,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Updated default model to `deepseek/deepseek-chat` in `.env`.
 
-## [0.1.1] - 2025-04-18
+## [0.1.1] - 2024-04-24
+### Added
+- Basic file selection functionality (logs selected file name to console).
+- Responsive design improvements using CSS media queries for better mobile layout.
+- Professional icons using `react-icons` library, replacing previous emoji/pseudo-element icons.
+
 ### Changed
-- Verified OpenRouter API request format in `src/ChatUI.jsx` against official documentation.
+- Updated `.env.example`:
+  - Prefixed frontend-accessible variables with `VITE_`.
+  - Added specific variables (`VITE_OPENAI_API_BASE_URL`, `VITE_OPENAI_API_KEY`) for configuring custom OpenAI-compatible endpoints.
+  - Added `VITE_DEFAULT_MODEL` variable for setting the default model.
+  - Improved comments for better clarity and ease of configuration.
+- Refined CSS for improved aesthetics (colors, spacing, loading indicator).
+
+### Fixed
+- Resolved issue where `src/index.css` was not found by Vite.
+- Corrected `package.json` to include standard Vite scripts (`dev`) and necessary React/Vite dependencies.
 
 ## [0.1.0] - 2024-04-23
 
@@ -25,6 +39,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Environment variable support using `dotenv` package.
 - `.env.example` file to provide a template for necessary environment variables (e.g., API keys).
 - `.gitignore` file to exclude sensitive files (`.env`) and build artifacts (`node_modules`) from version control.
+- Basic React component structure (`App`, `Chatbot`, `ChatMessages`, `ChatInput`, `TopBar`, `api.js`).
+- Implemented core message sending/receiving logic (non-streaming).
+- Basic API configuration handling for OpenRouter and OpenAI-compatible endpoints in `api.js`.
 
 ### Changed
 - Refined chat message styling for clearer visual separation and layout.
