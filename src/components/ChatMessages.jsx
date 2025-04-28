@@ -7,21 +7,18 @@ const aiAvatarUrl = "https://via.placeholder.com/40/808080/FFFFFF?text=AI";
 const userAvatarUrl = "https://via.placeholder.com/40/007BFF/FFFFFF?text=U";
 
 function ChatMessages({ messages, isLoading }) {
-  const chatAreaRef = useRef(null);
+  const messagesEndRef = useRef(null); // Renamed for clarity
 
-  // Auto-scroll to bottom when messages change
+  // Auto-scroll to bottom when messages change or loading state changes
   useEffect(() => {
-    if (chatAreaRef.current) {
-      // Smooth scroll is generally preferred, but instant scroll ensures visibility
-      // For smooth scroll: chatAreaRef.current.scrollTo({ top: chatAreaRef.current.scrollHeight, behavior: 'smooth' });
-      chatAreaRef.current.scrollTop = chatAreaRef.current.scrollHeight;
-    }
-  }, [messages]); // Dependency array includes messages
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, isLoading]);
 
   return (
-    <div className="chat-area" ref={chatAreaRef}>
+    <>
       {messages.map((msg, index) => (
-        <div key={index} className={`message-container ${msg.role} ${msg.isError ? 'error-message-container' : ''}`}>
+        <div key={msg.timestamp + index} /* Use a more robust key if possible */
+             className={`message-container ${msg.role} ${msg.isError ? 'error-message-container' : ''} ${isLoading && index === messages.length - 1 ? 'last-message-loading' : ''}`}>
           {/* <img
             src={msg.role === 'assistant' ? aiAvatarUrl : userAvatarUrl}
             alt={`${msg.role} Avatar`}
@@ -36,7 +33,7 @@ function ChatMessages({ messages, isLoading }) {
           </div>
         </div>
       ))}
-      {/* Optionally show a loading indicator at the end */}
+      {/* Loading indicator */}
       {isLoading && (
          <div className="message-container ai loading-indicator">
             {/* <img src={aiAvatarUrl} alt="AI Avatar" className="avatar" /> */}
@@ -46,7 +43,9 @@ function ChatMessages({ messages, isLoading }) {
             </div>
          </div>
       )}
-    </div>
+      {/* Element to help scrolling to bottom */}
+      <div ref={messagesEndRef} />
+    </>
   );
 }
 

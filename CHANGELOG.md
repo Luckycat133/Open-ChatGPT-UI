@@ -7,10 +7,80 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
-- Implemented streaming support for AI responses in `src/ChatUI.jsx`.
-- Reviewed detailed OpenRouter API documentation regarding model routing, streaming, multimodal support, and response formats.
+- Implement message streaming functionality
+- Update default model to `deepseek/deepseek-chat` (`.env` configuration)
+
 ### Changed
-- Updated default model to `deepseek/deepseek-chat` in `.env`.
+- Optimize chat interface layout with 1280px max-width container (`src/index.css`)
+- Improve mobile sidebar interaction experience
+
+### Fixed
+- Fix model selector dropdown display issue on mobile devices
+
+## [0.1.1] - 2024-04-28
+### Changed
+- Remove max-width constraints in `src/index.css` for full-width chat interface
+
+## [0.1.0] - 2024-04-23
+
+### Changed
+- Removed max-width constraints in `src/index.css` to allow the chat interface to utilize the full window width.
+
+## [1.1.0] - 2024-04-24
+### Added
+- Multi-conversation management system
+- ChatList sidebar for conversation operations
+- Conversation persistence in localStorage
+- Import/export conversation functionality
+- Conversation sharing via clipboard
+
+### Changed
+- Implement responsive layout adjustments for desktop/mobile
+- Refactor chat state management in `Chatbot.jsx`
+- Update CSS for new layout in `index.css`
+
+### Removed
+- Static user/AI avatars from messages
+- "Reason" button from input area
+
+## [1.0.1] - 2024-04-24
+### Fixed
+- Resolve blank screen issue by fixing chat state logic
+- Correct JavaScript error in empty chat handling
+
+## [1.0.0] - 2024-04-24
+### Changed
+- Complete UI redesign with new color scheme and layout
+- Implement persistent left sidebar
+- Add empty state placeholders
+- Optimize textarea auto-grow behavior
+
+#### Removed
+- Removed the "Private" toggle button and related logic from `TopBar.jsx`.
+
+### 2025-04-24 (Conversation Management)
+
+#### Added
+- **Conversation Management:**
+  - Implemented multi-conversation support.
+  - Added `ChatList` sidebar to view, select, rename, and delete conversations.
+  - Conversations are now persisted in browser `localStorage`.
+  - Added conversation export (as `.json` file) and import functionality.
+  - Added conversation sharing (copy text to clipboard).
+- **UI/UX:**
+  - Added `TopBar` button to toggle the `ChatList` sidebar visibility.
+  - Implemented responsive layout adjustments for desktop screens (sidebar pushes content) and mobile (sidebar overlays content).
+
+#### Changed
+- Refactored `Chatbot.jsx` to manage conversation state and `localStorage`.
+- Updated `TopBar.jsx` to handle model selection state via props and trigger sidebar toggle.
+- Updated `api.js` to export `DEFAULT_MODEL`.
+- Updated CSS (`index.css`) significantly for new layout, sidebar, and responsiveness.
+
+#### Removed
+- Removed static user/AI avatars from chat messages.
+- Removed the "Reason" (lightbulb icon) button from the input area.
+- Removed hardcoded model list from `TopBar.jsx`, now uses models defined in the component and `DEFAULT_MODEL` from `api.js`.
 
 ## [0.1.1] - 2024-04-24
 ### Added

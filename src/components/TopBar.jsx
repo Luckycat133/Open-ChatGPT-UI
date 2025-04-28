@@ -1,40 +1,21 @@
 import React, { useState, useEffect, useRef } from 'react';
 // Import icons from react-icons
-import { FaHistory, FaPlus, FaLock, FaUnlock, FaChevronDown, FaCheck } from 'react-icons/fa';
+import { FaHistory, FaLock, FaUnlock, FaChevronDown, FaCheck } from 'react-icons/fa';
 // Import DEFAULT_MODEL from api.js
 import api from '../api';
 
-function TopBar() {
-  // Use DEFAULT_MODEL from api.js for initial state
-  const [selectedModel, setSelectedModel] = useState(api.DEFAULT_MODEL);
-  const [isPrivate, setIsPrivate] = useState(false);
+// Receive props from Chatbot
+function TopBar({ onNewChat, selectedModel, onModelChange, onToggleChatList }) {
+  // Local state for dropdown visibility and privacy toggle
+  // selectedModel state is now managed by the parent (Chatbot)
   const [isModelDropdownOpen, setIsModelDropdownOpen] = useState(false);
   const dropdownRef = useRef(null); // Ref for the dropdown container
 
   const handleModelChange = (modelId) => {
-    console.log("Model selected:", modelId);
-    setSelectedModel(modelId);
+    // Call the handler passed from the parent
+    onModelChange(modelId);
     setIsModelDropdownOpen(false); // Close dropdown after selection
-    // TODO: Pass the selected model ID up to the Chatbot component
-    //       or use context to update the model used in api.sendMessage
   };
-
-  const handleTogglePrivacy = () => {
-    console.log("Toggling privacy mode");
-    setIsPrivate(prev => !prev);
-    // TODO: Add logic for private mode (e.g., don't save history)
-  };
-
-   const handleNewChat = () => {
-     console.log("Starting new chat");
-     // TODO: Add logic to clear messages and potentially reset state in Chatbot component
-   };
-
-   const handleToggleHistory = () => {
-     console.log("Toggling history sidebar");
-     // TODO: Add logic to show/hide a history panel
-   };
-
 
   // Define a more realistic list of available models
   // Ideally, this list might also come from api.js or be fetched dynamically
@@ -75,26 +56,26 @@ function TopBar() {
 
   return (
     <div className="top-bar">
+      {/* Left section - only sidebar toggle */}
       <div className="top-left">
-        <button className="icon-button" title="Toggle History" onClick={handleToggleHistory}>
+        <button className="icon-button sidebar-toggle-button" title="切换对话历史" onClick={onToggleChatList}>
             <FaHistory />
         </button>
-        <button className="icon-button" title="New Chat" onClick={handleNewChat}>
-            <FaPlus />
-        </button>
-        {/* Custom Dropdown Button */}
+      </div>
+
+      {/* Center section - Model Selector */}
+      <div className="top-center">
         <div className="model-select-container" ref={dropdownRef}>
-          <button 
-            className="dropdown-button-custom" 
-            onClick={() => setIsModelDropdownOpen(!isModelDropdownOpen)}
-          >
-            <span>{selectedModelName}</span>
-            <FaChevronDown className={`dropdown-arrow ${isModelDropdownOpen ? 'open' : ''}`} />
-          </button>
-          {/* Dropdown Menu - Conditionally Rendered */}
-          {isModelDropdownOpen && (
-            <div className="model-dropdown-menu">
-              <ul>
+           <button
+             className="dropdown-button-custom"
+             onClick={() => setIsModelDropdownOpen(!isModelDropdownOpen)}
+           >
+             <span>{selectedModelName}</span>
+             <FaChevronDown className={`dropdown-arrow ${isModelDropdownOpen ? 'open' : ''}`} />
+           </button>
+           {isModelDropdownOpen && (
+             <div className="model-dropdown-menu">
+                <ul>
                 {availableModels.map(model => (
                   <li key={model.id}>
                     <button onClick={() => handleModelChange(model.id)}>
@@ -104,19 +85,17 @@ function TopBar() {
                   </li>
                 ))}
               </ul>
-            </div>
-          )}
-        </div>
+             </div>
+           )}
+         </div>
       </div>
+
+      {/* Right section - kept empty for now, can add user menu etc. later */}
       <div className="top-right">
-        <button
-          className={`toggle-button ${isPrivate ? 'active' : ''}`}
-          title="Toggle Privacy Mode"
-          onClick={handleTogglePrivacy}
-        >
-          {isPrivate ? <FaLock /> : <FaUnlock />}
-          {isPrivate ? 'Private Active' : 'Private'}
-        </button>
+          {/* Example: Placeholder for potential User menu or other icons */}
+          {/* <button className="icon-button" title="User Menu">
+               <FaUser /> 
+          </button> */}
       </div>
     </div>
   );

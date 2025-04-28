@@ -1,208 +1,466 @@
 /* src/index.css */
 :root {
-    --user-message-bg: #0a84ff; /* Slightly adjusted blue */
-    --ai-message-bg: #e5e5ea;
+    /* 参考 ChatGPT 风格重新定义颜色 */
     --container-bg: #ffffff;
-    --chat-area-bg: #f7f7f8;
-    --text-color: #1c1c1e;
-    --secondary-text-color: #636366;
-    --border-color: #e0e0e0;
-    --input-bg: #f0f0f0;
-    --button-bg: #f0f0f0;
-    --button-hover-bg: #e0e0e0;
-    --send-button-bg: #000000;
-    --send-button-hover-bg: #333333;
+    --sidebar-bg: #f9f9f9; /* 浅灰色侧边栏 */
+    --chat-area-bg: var(--container-bg); /* 主聊天区背景 */
+    --message-bg-ai: #f7f7f8; /* AI 消息背景 */
+    --message-bg-user: #ececf1; /* 用户消息背景 (更柔和) */
+    --text-color: #202123; /* 主要文字颜色 */
+    --secondary-text-color: #6e6e80; /* 次要文字/图标颜色 */
+    --border-color: #e5e5e5; /* 边框颜色 */
+    --input-bg: #f7f7f8; /* 输入框背景 */
+    --button-bg: #f7f7f8; /* 按钮背景 */
+    --button-hover-bg: #e5e5e5; /* 按钮悬停背景 */
+    --action-button-color: #6e6e80;
+    --action-button-hover-color: #202123;
+    --send-button-bg: var(--action-button-color); /* 发送按钮 */
+    --send-button-hover-bg: var(--action-button-hover-color);
     --error-bg: #ffebee;
     --error-text: #b71c1c;
     --error-border: #ef9a9a;
+    --link-color: #1a73e8;
+    --highlight-bg: #e0e0e0; /* 侧边栏选中项背景 */
 }
 
 body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-    margin: 0;
-    background-color: #f4f5f7;
     display: flex;
     justify-content: center;
-    align-items: center;
-    min-height: 100vh;
+    align-items: flex-start; /* Align items to the top */
+    min-height: 100vh; /* Ensure body takes full viewport height */
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    margin: 0;
+    background-color: var(--container-bg); /* 整体背景 */
     color: var(--text-color);
+    font-size: 15px; /* Base font size */
 }
 
-.chat-container {
+/* 主容器包裹侧边栏和聊天区域 */
+.chat-container-wrapper {
+    display: flex;
     width: 100%;
-    max-width: 800px;
-    height: 90vh;
-    max-height: 750px; /* Slightly increased max-height */
+    height: 100vh;
+    overflow: hidden;
+    max-width: 1280px;
+    margin: 0 auto;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+/* --- 侧边栏 (对话列表) --- */
+.chat-list-sidebar {
+    width: 260px; /* 固定宽度 */
+    background-color: var(--sidebar-bg);
+    border-right: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    position: relative; /* 在桌面端 */
+    transition: width 0.3s ease-in-out, transform 0.3s ease-in-out;
+    overflow: hidden; /* Hide content when collapsed */
+}
+
+/* 侧边栏隐藏状态 (桌面端) */
+.chat-list-sidebar.hidden {
+    width: 0;
+    border-right: none;
+}
+
+.chat-list-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 15px;
+    border-bottom: 1px solid var(--border-color);
+    flex-shrink: 0;
+    gap: 10px;
+}
+
+.chat-list-header h3 {
+    margin: 0;
+    font-size: 14px; /* 稍小 */
+    font-weight: 500;
+    flex-grow: 1;
+    white-space: nowrap;
+}
+
+.import-button,
+.close-sidebar-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--secondary-text-color);
+    font-size: 16px; /* 稍小 */
+    padding: 5px;
+    flex-shrink: 0;
+    border-radius: 4px;
+}
+.import-button:hover,
+.close-sidebar-button:hover {
+    color: var(--text-color);
+    background-color: var(--button-hover-bg);
+}
+
+.chat-list-ul {
+    list-style: none;
+    padding: 8px;
+    margin: 0;
+    overflow-y: auto;
+    flex-grow: 1;
+    scrollbar-width: thin;
+    scrollbar-color: var(--button-hover-bg) transparent;
+}
+/* ... (Webkit scrollbar styles) ... */
+
+.chat-list-item {
+    padding: 8px 10px;
+    border-radius: 6px;
+    margin-bottom: 4px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    transition: background-color 0.2s;
+    font-size: 14px;
+}
+
+.chat-list-item:hover {
+    background-color: var(--button-hover-bg);
+}
+
+.chat-list-item.active {
+    background-color: var(--highlight-bg);
+    font-weight: 500;
+}
+
+.chat-list-item .chat-name {
+    flex-grow: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding: 0; /* Reset padding */
+}
+
+.chat-list-item.editing .chat-name {
+    display: none;
+}
+
+.chat-list-item .rename-input {
+    flex-grow: 1;
+    padding: 4px 8px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-size: 14px;
     background-color: var(--container-bg);
-    border-radius: 16px;
-    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.1);
+    margin-right: 5px;
+}
+
+.chat-list-item.editing {
+    background-color: transparent; /* No background when editing */
+    cursor: default;
+}
+.chat-list-item.editing:hover {
+    background-color: transparent;
+}
+
+.chat-item-actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+    opacity: 0;
+    transition: opacity 0.2s ease-in-out;
+}
+
+.chat-list-item:hover .chat-item-actions,
+.chat-list-item.active .chat-item-actions {
+    opacity: 1;
+}
+
+.chat-list-item.editing .chat-item-actions {
+    display: none;
+}
+
+.chat-item-button {
+    /* Style remains similar, maybe adjust padding/size */
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--secondary-text-color);
+    font-size: 13px; /* Smaller icons */
+    padding: 4px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.chat-item-button:hover {
+    color: var(--text-color);
+    background-color: #dcdcdc;
+}
+/* ... (Specific button hover colors: delete, save, cancel) ... */
+
+.chat-list-empty {
+    padding: 20px;
+    text-align: center;
+    color: var(--secondary-text-color);
+    font-style: italic;
+    font-size: 14px;
+}
+
+/* --- 主聊天容器 --- */
+.chat-container {
+    flex-grow: 1;
+    height: 100vh;
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    background-color: var(--chat-area-bg);
+    position: relative; /* For potential absolute elements inside */
 }
 
 /* --- 顶部栏 --- */
 .top-bar {
     display: flex;
-    justify-content: space-between;
+    justify-content: space-between; /* Space between left, center, right */
     align-items: center;
-    padding: 12px 20px; /* Increased padding */
+    padding: 10px 15px; /* Adjusted padding */
     border-bottom: 1px solid var(--border-color);
     background-color: var(--container-bg);
-    flex-shrink: 0; /* Prevent shrinking */
+    flex-shrink: 0;
+    height: 50px;
 }
 
-.top-left,
+/* Adjust flex properties for alignment */
+.top-left {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    min-width: 100px; /* Ensure some space on the left */
+}
+
+.top-center {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-grow: 1; /* Allow center to take up space */
+}
+
 .top-right {
     display: flex;
     align-items: center;
-    gap: 12px; /* Increased gap */
+    justify-content: flex-end;
+    min-width: 100px; /* Ensure some space on the right */
 }
 
-.icon-button,
-.dropdown-button,
-.toggle-button {
-    background-color: var(--button-bg);
+.icon-button { /* For History/New Chat buttons */
+    background: none;
     border: none;
-    border-radius: 50%;
-    width: 34px; /* Slightly larger */
-    height: 34px;
+    border-radius: 6px;
+    width: 32px;
+    height: 32px;
     display: flex;
     justify-content: center;
     align-items: center;
     cursor: pointer;
     font-size: 16px;
     color: var(--secondary-text-color);
-    transition: background-color 0.2s;
+    transition: background-color 0.2s, color 0.2s;
 }
-.icon-button:hover,
-.dropdown-button:hover,
-.toggle-button:hover {
+.icon-button:hover {
     background-color: var(--button-hover-bg);
+    color: var(--text-color);
 }
 
-.dropdown-button {
-    border-radius: 8px;
-    width: auto;
-    height: 34px; /* Match height */
-    padding: 0 12px;
+/* Custom Dropdown Button (Model Selector) */
+.model-select-container {
+    position: relative;
+    display: inline-block;
+}
+
+.dropdown-button-custom {
+    background-color: transparent; /* Cleaner look */
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    height: 32px;
+    padding: 0 10px 0 12px;
     font-size: 14px;
     font-weight: 500;
-    appearance: none;
-    background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23636366%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E'); /* Darker arrow */
-    background-repeat: no-repeat;
-    background-position: right 10px top 50%;
-    background-size: .6em auto;
-    padding-right: 30px;
-    color: var(--text-color); /* Ensure text color is readable */
+    color: var(--text-color);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    min-width: 180px; /* Adjust as needed */
+    transition: background-color 0.2s, border-color 0.2s;
 }
 
-.toggle-button {
-    width: auto;
-    height: 34px; /* Match height */
-    padding: 0 15px; /* Adjusted padding */
+.dropdown-button-custom:hover {
+    background-color: var(--button-bg); /* Subtle hover */
+}
+
+.dropdown-arrow {
+    transition: transform 0.2s ease-in-out;
+    color: var(--secondary-text-color);
+    font-size: 12px;
+}
+
+.dropdown-arrow.open {
+    transform: rotate(180deg);
+}
+
+.model-dropdown-menu {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    background-color: var(--container-bg);
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    border: 1px solid var(--border-color);
+    padding: 6px;
+    min-width: 100%;
+    z-index: 1000;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.model-dropdown-menu ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.model-dropdown-menu li button {
+    background: none;
+    border: none;
+    color: var(--text-color);
+    padding: 8px 12px;
+    width: 100%;
+    text-align: left;
+    cursor: pointer;
     font-size: 14px;
-    border-radius: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    border-radius: 4px;
+}
+
+.model-dropdown-menu li button:hover {
+    background-color: var(--button-bg);
+}
+
+.checkmark-icon {
+    color: var(--link-color);
+    font-size: 14px;
+}
+
+/* Simplified Privacy Toggle */
+.toggle-button {
+    /* Reuse icon-button style? Or specific style */
+    background: none;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    height: 32px;
+    padding: 0 10px;
+    font-size: 14px;
     display: inline-flex;
     align-items: center;
-    gap: 6px; /* Gap between icon and text */
+    gap: 6px;
+    color: var(--secondary-text-color);
+    cursor: pointer;
+    transition: background-color 0.2s, color 0.2s, border-color 0.2s;
+}
+.toggle-button:hover {
+    background-color: var(--button-bg);
+    color: var(--text-color);
 }
 .toggle-button.active {
-    background-color: var(--user-message-bg);
-    color: white;
+    background-color: var(--message-bg-user); /* Use a subtle active color */
+    color: var(--text-color);
+    border-color: transparent;
 }
-.toggle-button .icon-privacy {
-    padding-right: 0; /* Remove padding from pseudo-element */
-}
-
-/* 模拟图标 */
-/*
-.icon-history::before { content: '☰'; }
-.icon-new-chat::before { content: '+'; }
-.icon-privacy::before { content: '🔒'; padding-right: 5px;}
-*/
-
 
 /* --- 对话区域 --- */
 .chat-area {
     flex-grow: 1;
-    padding: 25px; /* Increased padding */
+    padding: 0; /* Remove padding, handled by inner container */
     overflow-y: auto;
     background-color: var(--chat-area-bg);
     display: flex;
     flex-direction: column;
-    gap: 18px; /* Increased gap */
-    scrollbar-width: thin; /* Firefox scrollbar */
-    scrollbar-color: var(--button-hover-bg) transparent; /* Firefox scrollbar */
+    scrollbar-width: thin;
+    scrollbar-color: var(--button-hover-bg) transparent;
 }
-/* Webkit scrollbar styling */
-.chat-area::-webkit-scrollbar {
-    width: 6px;
+/* ... (Webkit scrollbar styles) ... */
+
+/* Inner container for messages to control width */
+.messages-wrapper {
+    width: 100%;
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 25px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+    box-sizing: border-box;
 }
-.chat-area::-webkit-scrollbar-track {
-    background: transparent;
+
+/* Placeholder for empty chat */
+.empty-chat-placeholder {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    color: var(--secondary-text-color);
+    padding: 20px;
 }
-.chat-area::-webkit-scrollbar-thumb {
-    background-color: var(--button-hover-bg);
-    border-radius: 3px;
+
+.empty-chat-placeholder h2 {
+    font-size: 20px;
+    font-weight: 500;
+    margin-bottom: 15px;
 }
 
 /* --- 消息容器样式 --- */
 .message-container {
     display: flex;
-    max-width: 80%; /* Slightly reduced max-width */
-    /* align-items: flex-end; */ /* Removed to allow default stretching */
-    /* gap: 10px; */ /* Removed gap for avatar */
+    max-width: 95%; /* Allow slightly wider */
+    gap: 10px;
+    align-items: flex-start; /* Align top */
 }
 .message-container.user {
     align-self: flex-end;
-    flex-direction: row-reverse; /* Keep this for right alignment */
-    /* Adjust margin if needed after removing avatar */
-    /* margin-left: auto; */ /* Ensure it stays right */
+    /* flex-direction: row-reverse; No longer needed if no avatar */
 }
 .message-container.ai {
     align-self: flex-start;
-    flex-direction: row; /* Keep this for left alignment */
-     /* Adjust margin if needed after removing avatar */
-    /* margin-right: auto; */ /* Ensure it stays left */
-}
-
-/* 消息头像 - Keep the style definition in case you want to add them back */
-.message-container img.avatar {
-    width: 38px; /* Slightly smaller */
-    height: 38px;
-    border-radius: 50%;
-    object-fit: cover;
-    flex-shrink: 0;
-    background-color: var(--button-bg); /* Placeholder bg */
-    border: 1px solid var(--border-color); /* Subtle border */
-    /* display: none; */ /* Alternative: hide instead of removing from JSX */
 }
 
 /* 消息内容区域 */
 .message-content {
-    padding: 12px 18px; /* Adjusted padding */
-    border-radius: 20px; /* More rounded */
-    line-height: 1.45; /* Slightly adjusted */
+    padding: 10px 15px;
+    border-radius: 8px;
+    line-height: 1.5;
     position: relative;
-    min-width: 40px;
-    padding-bottom: 22px; /* More space for timestamp */
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05); /* Subtle shadow */
     word-wrap: break-word;
+    box-shadow: none; /* Remove individual shadow */
+    padding-bottom: 25px; /* Space for timestamp */
 }
 
 /* AI 消息样式 */
 .message-container.ai .message-content {
-    background-color: var(--ai-message-bg);
+    background-color: var(--message-bg-ai);
     color: var(--text-color);
-    border-bottom-left-radius: 6px;
 }
 
 /* 用户消息样式 */
 .message-container.user .message-content {
-    background-color: var(--user-message-bg);
-    color: white;
-    border-bottom-right-radius: 6px;
+    background-color: var(--message-bg-user);
+    color: var(--text-color); /* User text also dark */
 }
 
 .message-content p {
@@ -211,19 +469,18 @@ body {
 
 /* 时间戳 */
 .message-time {
-    font-size: 11px; /* Slightly larger */
+    font-size: 11px;
     color: var(--secondary-text-color);
     position: absolute;
-    bottom: 7px; /* Adjusted position */
+    bottom: 6px;
+    right: 12px; /* Position bottom right generally */
     white-space: nowrap;
 }
 .message-container.ai .message-time {
-    left: 18px;
-    color: var(--secondary-text-color);
+     /* No specific override needed now */
 }
 .message-container.user .message-time {
-    right: 18px;
-    color: rgba(255, 255, 255, 0.7); /* Lighter timestamp on blue */
+    /* No specific override needed now */
 }
 
 /* Error message specific styling */
@@ -238,123 +495,93 @@ body {
 .error-indicator {
     font-weight: bold;
     margin-left: 5px;
+    color: var(--error-text);
 }
 
 /* Loading Indicator Styling */
+.loading-indicator {
+    /* align-self: flex-start; Needed? */
+}
 .loading-indicator .message-content {
-    padding: 12px 18px; /* Match normal padding */
+    background-color: var(--message-bg-ai);
+    padding: 12px 18px;
     display: flex;
     align-items: center;
     justify-content: center;
 }
-.loading-indicator .thinking {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background-color: var(--secondary-text-color);
-    box-shadow: 16px 0 var(--secondary-text-color), -16px 0 var(--secondary-text-color);
-    animation: thinking-dots 1s infinite linear;
-    margin: 0; /* Remove default p margin */
-}
-
-@keyframes thinking-dots {
-  0% {
-    box-shadow: 16px 0 var(--secondary-text-color), -16px 0 rgba(128,128,128,0.3);
-    background-color: rgba(128,128,128,0.3);
-  }
-  33% {
-    box-shadow: 16px 0 var(--secondary-text-color), -16px 0 rgba(128,128,128,0.3);
-    background-color: var(--secondary-text-color);
-  }
-  66% {
-    box-shadow: 16px 0 rgba(128,128,128,0.3), -16px 0 var(--secondary-text-color);
-    background-color: rgba(128,128,128,0.3);
-  }
-  100% {
-    box-shadow: 16px 0 rgba(128,128,128,0.3), -16px 0 rgba(128,128,128,0.3);
-    background-color: rgba(128,128,128,0.3);
-  }
-}
-
+/* ... (Thinking dots animation remains same) ... */
 
 /* --- 输入区域 --- */
-.input-area {
-    display: flex;
-    align-items: flex-end;
-    padding: 15px 20px;
-    border-top: 1px solid var(--border-color);
-    background-color: var(--container-bg);
-    gap: 10px; /* Adjusted gap */
-    flex-shrink: 0; /* Prevent shrinking */
+.input-area-wrapper {
+    padding: 15px 0;
+    width: 100%;
+    max-width: 800px;
+    margin: 0 auto;
+    flex-shrink: 0;
+    box-sizing: border-box;
 }
 
-.input-left-buttons {
+.input-area {
     display: flex;
-    gap: 10px; /* Adjusted gap */
+    align-items: flex-end; /* Keep alignment */
+    padding: 10px;
+    background-color: var(--container-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    gap: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+}
+
+.input-left-buttons,
+.input-right-buttons {
+    display: flex;
+    gap: 8px;
+    align-items: flex-end;
+    padding-bottom: 6px; /* Fine-tune alignment with textarea */
 }
 
 .action-button {
-    background-color: var(--button-bg);
+    /* Styles remain the same */
+    background-color: transparent;
     border: none;
-    border-radius: 10px; /* More rounded square */
-    width: 40px; /* Larger buttons */
-    height: 40px;
+    border-radius: 8px;
+    width: 36px;
+    height: 36px;
     display: flex;
     justify-content: center;
     align-items: center;
     cursor: pointer;
-    font-size: 20px; /* Larger icons */
-    color: var(--secondary-text-color);
+    font-size: 18px;
+    color: var(--action-button-color);
     transition: background-color 0.2s, color 0.2s;
     flex-shrink: 0;
 }
 .action-button:hover:not(:disabled) {
-    background-color: var(--button-hover-bg);
+    background-color: var(--button-bg);
+    color: var(--action-button-hover-color);
 }
 .action-button:disabled {
     opacity: 0.5;
     cursor: not-allowed;
 }
 
-/* Icon styling moved here for consistency */
-/*
-.icon-upload::before { content: '↑'; font-weight: bold;}
-.icon-search::before { content: '🔍'; }
-.icon-reason::before { content: '💡'; }
-.icon-mic::before { content: '🎤'; }
-.icon-send::before { content: '➤'; font-size: 22px; transform: rotate(-45deg) translateX(-1px) translateY(1px); display: inline-block;}
-*/
-
-
 .chat-input {
     flex-grow: 1;
     border: none;
-    background-color: var(--input-bg);
-    border-radius: 20px;
-    padding: 10px 18px;
+    background-color: transparent;
+    padding: 8px 10px;
     font-size: 15px;
     outline: none;
-    line-height: 1.5;
-    max-height: 120px; /* Increased max height */
+    line-height: 1.6;
+    max-height: 150px;
     overflow-y: auto;
     resize: none;
-    scrollbar-width: thin;
-    scrollbar-color: var(--button-hover-bg) transparent;
+    color: var(--text-color);
+    /* Remove scrollbar styles if they cause issues, or refine */
+    scrollbar-width: none; /* Hide scrollbar for cleaner look maybe? */
 }
 .chat-input::-webkit-scrollbar {
-    width: 5px;
-}
-.chat-input::-webkit-scrollbar-thumb {
-    background-color: var(--button-hover-bg);
-    border-radius: 3px;
-}
-.chat-input:focus {
-    background-color: var(--button-hover-bg);
-}
-
-.input-right-buttons {
-    display: flex;
-    gap: 10px;
+     display: none; /* Hide scrollbar for cleaner look */
 }
 
 .send-button {
@@ -363,201 +590,60 @@ body {
 }
 .send-button:hover:not(:disabled) {
     background-color: var(--send-button-hover-bg);
-    color: white;
 }
 .send-button.disabled {
     background-color: #cccccc;
+    opacity: 0.6;
     color: #888888;
 }
 
-/* General Error Message Styling */
+/* General Error Message Styling (below input) */
 .error-message {
     color: var(--error-text);
-    padding: 10px 20px;
+    padding: 8px 20px;
     text-align: center;
-    font-size: 14px;
-    background-color: var(--error-bg);
-    border-top: 1px solid var(--border-color);
+    font-size: 13px;
+    /* background-color: var(--error-bg); */ /* Optional background */
 }
-
-/* --- Custom Dropdown Styles --- */
-.model-select-container {
-    position: relative; /* Needed for absolute positioning of the menu */
-    display: inline-block; /* Take only necessary width */
-}
-
-.dropdown-button-custom {
-    background-color: var(--button-bg);
-    border: none;
-    border-radius: 8px;
-    height: 34px;
-    padding: 0 15px; /* Adjust padding */
-    font-size: 14px;
-    font-weight: 500;
-    color: var(--text-color);
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: space-between; /* Space between text and arrow */
-    gap: 8px;
-    min-width: 150px; /* Give it some base width */
-    transition: background-color 0.2s;
-}
-
-.dropdown-button-custom:hover {
-    background-color: var(--button-hover-bg);
-}
-
-.dropdown-arrow {
-    transition: transform 0.2s ease-in-out;
-    color: var(--secondary-text-color);
-    font-size: 12px; /* Smaller arrow */
-}
-
-.dropdown-arrow.open {
-    transform: rotate(180deg);
-}
-
-.model-dropdown-menu {
-    position: absolute;
-    top: calc(100% + 4px); /* Position below the button with a small gap */
-    left: 0;
-    background-color: var(--container-bg);
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    border: 1px solid var(--border-color);
-    padding: 6px 0; /* Padding around the list */
-    min-width: 100%; /* At least as wide as the button */
-    z-index: 1000; /* Ensure it's above other content */
-    max-height: 300px; /* Limit height and allow scrolling */
-    overflow-y: auto;
-    list-style: none;
-    margin: 0;
-}
-
-.model-dropdown-menu ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-}
-
-.model-dropdown-menu li button {
-    background: none;
-    border: none;
-    color: var(--text-color);
-    padding: 8px 15px;
-    width: 100%;
-    text-align: left;
-    cursor: pointer;
-    font-size: 14px;
-    display: flex; /* For aligning checkmark */
-    justify-content: space-between; /* Push checkmark to the right */
-    align-items: center;
-    gap: 10px;
-}
-
-.model-dropdown-menu li button:hover {
-    background-color: var(--button-bg);
-}
-
-.checkmark-icon {
-    color: var(--user-message-bg); /* Use accent color */
-    font-size: 14px;
-}
-
 
 /* --- Responsive Design --- */
 @media (max-width: 768px) {
-    body {
-        align-items: flex-start; /* Align container to top on mobile */
-        background-color: var(--container-bg); /* Match container background */
+    /* Sidebar overlays */
+    .chat-list-sidebar {
+        position: fixed; /* Fixed position to overlay content */
+        z-index: 1100; /* Ensure above everything */
+        box-shadow: 2px 0 10px rgba(0, 0, 0, 0.15);
+        transform: translateX(-100%); /* Start hidden */
     }
-    .chat-container {
-        height: 100vh; /* Full height */
-        max-height: none; /* Remove max height */
-        width: 100%;
-        max-width: none; /* Remove max width */
-        border-radius: 0; /* No rounded corners on mobile */
-        box-shadow: none; /* No shadow */
+     .chat-list-sidebar.visible {
+        transform: translateX(0);
     }
-    .top-bar {
-        padding: 10px 15px; /* Slightly reduced padding */
-    }
-    .top-left,
-    .top-right {
-        gap: 8px; /* Reduced gap */
-    }
-    .icon-button,
-    .dropdown-button,
-    .toggle-button {
-        width: 32px; /* Slightly smaller buttons */
-        height: 32px;
-    }
-    .dropdown-button,
-    .toggle-button {
-        height: 32px;
-        font-size: 13px; /* Smaller font */
-        padding: 0 10px;
-    }
-     .dropdown-button {
-        padding-right: 25px; /* Adjust arrow space */
+    /* No push effect needed */
+
+    /* Adjust message wrapper padding on mobile */
+    .messages-wrapper {
+        padding: 20px 15px;
+        max-width: 100%; /* Full width */
     }
 
-    .chat-area {
-        padding: 15px; /* Reduced padding */
-        gap: 15px; /* Reduced gap */
+     /* Adjust input area wrapper padding */
+    .input-area-wrapper {
+        padding: 10px 10px;
+         max-width: 100%;
     }
 
-    .message-container {
-        max-width: 90%; /* Allow slightly wider messages */
-    }
-    .message-container img.avatar {
+    /* Smaller action buttons on mobile */
+    .action-button {
         width: 32px;
         height: 32px;
-    }
-     .message-content {
-        padding: 10px 15px; /* Slightly reduced padding */
-        padding-bottom: 20px;
-    }
-    .message-time {
-        font-size: 10px;
-        bottom: 6px;
-    }
-    .message-container.ai .message-time { left: 15px; }
-    .message-container.user .message-time { right: 15px; }
-
-    .input-area {
-        padding: 10px 15px;
-        gap: 8px;
+        font-size: 16px;
     }
     .input-left-buttons,
     .input-right-buttons {
-        gap: 8px;
-    }
-    .action-button {
-        width: 38px; /* Keep input buttons slightly larger */
-        height: 38px;
-        font-size: 18px;
+        padding-bottom: 6px; /* Adjust alignment */
     }
     .chat-input {
-        padding: 9px 15px;
+        padding: 6px 8px;
         font-size: 14px;
     }
-    /* Adjust custom dropdown button on mobile */
-    .dropdown-button-custom {
-        height: 32px;
-        padding: 0 10px;
-        font-size: 13px;
-        min-width: 120px; /* Adjust min-width */
-    }
-    .model-dropdown-menu {
-        /* Optional: Adjust positioning or max-height on mobile if needed */
-    }
-    .model-dropdown-menu li button {
-        padding: 7px 12px;
-        font-size: 13px;
-    }
-    .checkmark-icon {
-        font-size: 13px;
-    }
-} 
+}

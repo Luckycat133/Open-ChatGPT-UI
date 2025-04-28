@@ -1,15 +1,18 @@
 import React, { useRef } from 'react';
 // Import icons
-import { FaUpload, FaSearch, FaLightbulb, FaMicrophone, FaPaperPlane } from 'react-icons/fa';
+import { FaUpload, FaSearch, FaMicrophone, FaPaperPlane } from 'react-icons/fa';
 
 function ChatInput({ newMessage, setNewMessage, isLoading, handleSendMessage }) {
   const fileInputRef = useRef(null); // Create a ref for the file input
+  const textareaRef = useRef(null); // Ref for the textarea
 
   // Handle Enter key press (optional: Shift+Enter for newline)
   const handleKeyDown = (event) => {
-    if (event.key === 'Enter' && !event.shiftKey) { // Allow sending even if loading, API call logic prevents double send
-      event.preventDefault(); // Prevent default newline behavior
-      handleSendMessage();
+    if (event.key === 'Enter' && !event.shiftKey) {
+      event.preventDefault(); 
+      if (!isLoading && newMessage.trim().length > 0) { // Check if can send before sending
+        handleSendMessage();
+      }
     }
   };
 
@@ -29,10 +32,20 @@ function ChatInput({ newMessage, setNewMessage, isLoading, handleSendMessage }) 
     }
   };
 
+  const handleInput = (e) => {
+    // Auto-grow textarea
+    const textarea = e.target;
+    textarea.style.height = 'auto'; // Reset height
+    // Set height based on scroll height, but limit to max-height from CSS
+    const maxHeight = parseInt(window.getComputedStyle(textarea).maxHeight, 10);
+    const newHeight = Math.min(textarea.scrollHeight, maxHeight);
+    textarea.style.height = newHeight + 'px';
+  };
+
   const canSend = newMessage.trim().length > 0 && !isLoading;
 
   return (
-    <div className="input-area">
+    <>
       {/* Hidden file input */}
       <input
         type="file"
@@ -42,45 +55,44 @@ function ChatInput({ newMessage, setNewMessage, isLoading, handleSendMessage }) 
         // Allow images, videos, audio, pdf, text, csv, doc(x), xls(x), ppt(x)
         accept="image/*,video/*,audio/*,.pdf,.txt,.csv,.doc,.docx,.xls,.xlsx,.ppt,.pptx"
       />
-      <div className="input-left-buttons">
-        {/* Replace pseudo-elements with icons */}
-        <button className="action-button" title="Upload File" disabled={isLoading} onClick={handleUploadClick}>
-            <FaUpload />
-        </button>
-        <button className="action-button" title="Search (Not Implemented)" disabled={isLoading}>
-            <FaSearch />
-        </button>
+      <div className="input-area">
+        <div className="input-left-buttons">
+          {/* Replace pseudo-elements with icons */}
+          <button className="action-button" title="Upload File" disabled={isLoading} onClick={handleUploadClick}>
+              <FaUpload />
+          </button>
+          {/* <button className="action-button" title="Search (Not Implemented)" disabled={isLoading}>
+              <FaSearch />
+          </button> */}
+        </div>
+        {/* Using textarea for potential multi-line input */}
+        <textarea
+          ref={textareaRef}
+          rows="1" // Start with one row
+          className="chat-input"
+          placeholder="Ask anything..."
+          value={newMessage}
+          onChange={(e) => setNewMessage(e.target.value)}
+          onKeyDown={handleKeyDown} // Handle Enter key press
+          disabled={isLoading} // Disable input while loading
+          onInput={handleInput} // Use onInput for auto-grow
+          style={{ overflowY: 'auto' }} // Ensure scroll appears if max-height reached
+        />
+        <div className="input-right-buttons">
+          {/* <button className="action-button" title="Voice Input (Not Implemented)" disabled={isLoading}>
+               <FaMicrophone />
+          </button> */}
+          <button
+            className={`action-button send-button ${!canSend ? 'disabled' : ''}`} // Add disabled class for styling
+            title="Send"
+            onClick={handleSendMessage} // Trigger send on click
+            disabled={!canSend} // Disable if loading or input is empty/whitespace only
+          >
+              <FaPaperPlane />
+          </button>
+        </div>
       </div>
-      {/* Using textarea for potential multi-line input */}
-      <textarea
-        rows="1" // Start with one row
-        className="chat-input"
-        placeholder="Ask anything..."
-        value={newMessage}
-        onChange={(e) => setNewMessage(e.target.value)}
-        onKeyDown={handleKeyDown} // Handle Enter key press
-        disabled={isLoading} // Disable input while loading
-        style={{ resize: 'none', maxHeight: '100px', overflowY: 'auto' }} // Basic auto-resize styling
-        onInput={(e) => { // Simple auto-grow based on scroll height
-             e.target.style.height = 'auto';
-             e.target.style.height = (e.target.scrollHeight) + 'px';
-        }}
-      />
-      <div className="input-right-buttons">
-        {/* Replace pseudo-elements with icons */}
-        <button className="action-button" title="Voice Input (Not Implemented)" disabled={isLoading}>
-             <FaMicrophone />
-        </button>
-        <button
-          className={`action-button send-button ${!canSend ? 'disabled' : ''}`} // Add disabled class for styling
-          title="Send"
-          onClick={handleSendMessage} // Trigger send on click
-          disabled={!canSend} // Disable if loading or input is empty/whitespace only
-        >
-            <FaPaperPlane />
-        </button>
-      </div>
-    </div>
+    </>
   );
 }
 
