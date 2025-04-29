@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Changed
+- Translated remaining Chinese comments and UI text to English to ensure English-first priority.
 ### Added
 - Implement message streaming functionality
 - Update default model to `deepseek/deepseek-chat` (`.env` configuration)
@@ -17,21 +19,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Fix model selector dropdown display issue on mobile devices
 
-## [0.1.1] - 2024-04-28
+## [0.1.4] - 2024-04-28
 ### Changed
 - Remove max-width constraints in `src/index.css` for full-width chat interface
 
-## [0.1.0] - 2024-04-23
+## [0.1.3] - 2024-04-23
 
 ### Changed
 - Removed max-width constraints in `src/index.css` to allow the chat interface to utilize the full window width.
 
-## [1.1.0] - 2024-04-24
+## [0.1.2] - 2024-04-24
 ### Added
 - Multi-conversation management system
-- ChatList sidebar for conversation operations
-- Conversation persistence in localStorage
-- Import/export conversation functionality
+- Chat list sidebar functionality
+- Local storage for conversation history
+- Conversation import/export functionality
 - Conversation sharing via clipboard
 
 ### Changed
@@ -43,22 +45,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Static user/AI avatars from messages
 - "Reason" button from input area
 
-## [1.0.1] - 2024-04-24
+## [0.1.1] - 2024-04-24
 ### Fixed
-- Resolve blank screen issue by fixing chat state logic
-- Correct JavaScript error in empty chat handling
+- Fixed blank page issue (chat state logic)
+- Fixed JavaScript error when there are no conversations
 
-## [1.0.0] - 2024-04-24
+## [0.1.0] - 2024-04-23
 ### Changed
-- Complete UI redesign with new color scheme and layout
-- Implement persistent left sidebar
-- Add empty state placeholders
-- Optimize textarea auto-grow behavior
+- New UI design (color scheme and layout)
+- Implemented persistent left sidebar
+- Added placeholder for empty state
+- Optimized text area auto-expansion feature
 
 #### Removed
 - Removed the "Private" toggle button and related logic from `TopBar.jsx`.
 
-### 2025-04-24 (Conversation Management)
+### 2024-04-24 (Conversation Management)
 
 #### Added
 - **Conversation Management:**

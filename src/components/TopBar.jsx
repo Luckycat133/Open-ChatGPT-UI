@@ -58,7 +58,7 @@ function TopBar({ onNewChat, selectedModel, onModelChange, onToggleChatList }) {
     <div className="top-bar">
       {/* Left section - only sidebar toggle */}
       <div className="top-left">
-        <button className="icon-button sidebar-toggle-button" title="切换对话历史" onClick={onToggleChatList}>
+        <button className="icon-button sidebar-toggle-button" title="Toggle chat history" onClick={onToggleChatList}>
             <FaHistory />
         </button>
       </div>
@@ -101,4 +101,4 @@ function TopBar({ onNewChat, selectedModel, onModelChange, onToggleChatList }) {
   );
 }
 
-export default TopBar; 
+export default TopBar;

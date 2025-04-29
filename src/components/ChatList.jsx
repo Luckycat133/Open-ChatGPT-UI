@@ -84,12 +84,12 @@ function ChatList({
      const textToCopy = formatMessagesForExport(conversation.messages);
      navigator.clipboard.writeText(`Conversation: ${conversation.name}\n\n${textToCopy}`)
        .then(() => {
-         alert('对话内容已复制到剪贴板!'); // Simple feedback
+         alert('Conversation content copied to clipboard!'); // Simple feedback
          console.log(`Sharing chat content: ${conversation.name} (${id})`);
        })
        .catch(err => {
          console.error('无法复制对话内容: ', err);
-         alert('无法复制对话内容。');
+         alert('Could not copy conversation content.');
        });
   };
 
@@ -109,7 +109,7 @@ function ChatList({
         onImportChat(json); // Pass parsed data to the handler from parent
       } catch (error) {
         console.error("Error reading or parsing imported file:", error);
-        alert("导入失败：无法读取或解析文件。");
+        alert("Import failed: Could not read or parse the file.");
       } finally {
          // Reset file input value so the same file can be selected again if needed
          if(fileInputRef.current) {
@@ -119,7 +119,7 @@ function ChatList({
     };
     reader.onerror = (error) => {
        console.error("Error reading file:", error);
-       alert("导入失败：读取文件时出错。");
+       alert("Import failed: Error reading the file.");
         if(fileInputRef.current) {
              fileInputRef.current.value = '';
          }
@@ -144,24 +144,24 @@ function ChatList({
         onChange={handleFileSelected}
       />
       <div className="chat-list-header">
-        <h3>对话历史</h3>
+        <h3>Chat History</h3>
         {/* Add New Chat Button */}
-        <button onClick={onNewChat} className="new-chat-button" title="新建对话">
+        <button onClick={onNewChat} className="new-chat-button" title="New Chat">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
           </svg>
         </button>
         {/* Add Import Button */}
-        <button onClick={handleImportClick} className="import-button" title="导入对话 (.json)">
+        <button onClick={handleImportClick} className="import-button" title="Import Chat (.json)">
           <FaUpload />
         </button>
-        <button onClick={onClose} className="close-sidebar-button" title="关闭侧边栏">
+        <button onClick={onClose} className="close-sidebar-button" title="Close Sidebar">
           <FaTimes />
         </button>
       </div>
       <ul className="chat-list-ul">
         {sortedConversations.length === 0 ? (
-          <li className="chat-list-empty">没有对话历史</li>
+          <li className="chat-list-empty">No chat history</li>
         ) : (
           sortedConversations.map(({ id, name }) => (
             <li
@@ -178,10 +178,10 @@ function ChatList({
                     autoFocus // Focus the input when editing starts
                     className="rename-input"
                   />
-                  <button onClick={() => handleSaveEdit(id)} className="chat-item-button save" title="保存">
+                  <button onClick={() => handleSaveEdit(id)} className="chat-item-button save" title="Save">
                     <FaSave />
                   </button>
-                  <button onClick={handleCancelEdit} className="chat-item-button cancel" title="取消">
+                  <button onClick={handleCancelEdit} className="chat-item-button cancel" title="Cancel">
                     <FaTimes />
                   </button>
                 </>
@@ -191,16 +191,16 @@ function ChatList({
                     {name}
                   </span>
                   <div className="chat-item-actions">
-                    <button onClick={() => handleStartEdit(id, name)} className="chat-item-button edit" title="重命名">
+                    <button onClick={() => handleStartEdit(id, name)} className="chat-item-button edit" title="Rename">
                       <FaEdit />
                     </button>
-                    <button onClick={() => handleExport(id)} className="chat-item-button export" title="导出 (JSON)">
+                    <button onClick={() => handleExport(id)} className="chat-item-button export" title="Export (JSON)">
                       <FaDownload />
                     </button>
-                    <button onClick={() => handleShare(id)} className="chat-item-button share" title="分享 (复制内容)">
+                    <button onClick={() => handleShare(id)} className="chat-item-button share" title="Share (Copy Content)">
                       <FaShareAlt />
                     </button>
-                     <button onClick={() => onDeleteChat(id)} className="chat-item-button delete" title="删除">
+                     <button onClick={() => onDeleteChat(id)} className="chat-item-button delete" title="Delete">
                       <FaTrash />
                     </button>
                   </div>
@@ -214,4 +214,4 @@ function ChatList({
   );
 }
 
-export default ChatList; 
+export default ChatList;

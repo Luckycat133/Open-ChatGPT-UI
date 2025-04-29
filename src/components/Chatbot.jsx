@@ -40,7 +40,7 @@ function Chatbot() {
              } else {
                  // If no conversations exist, create an initial one with EMPTY messages
                  const newId = generateId();
-                 const initialConversation = { name: '新对话', messages: [] }; // Start with empty messages
+                 const initialConversation = { name: 'New Chat', messages: [] }; // Start with empty messages
                  setAllConversations({ [newId]: initialConversation });
                  setActiveConversationId(newId);
              }
@@ -55,7 +55,7 @@ function Chatbot() {
     // If no valid data loaded, create initial conversation with EMPTY messages
     console.log("No valid saved data found, creating initial conversation.");
     const newId = generateId();
-    const initialConversation = { name: '新对话', messages: [] }; // Start with empty messages
+    const initialConversation = { name: 'New Chat', messages: [] }; // Start with empty messages
     setAllConversations({ [newId]: initialConversation });
     setActiveConversationId(newId);
 
@@ -84,7 +84,7 @@ function Chatbot() {
   const handleSendMessage = async () => {
     if (!activeConversationId) {
         console.error("Cannot send message, no active conversation.");
-        setError("错误：没有活动的对话。");
+        setError("Error: No active conversation.");
         return;
     }
 
@@ -133,7 +133,7 @@ function Chatbot() {
 
     } catch (err) {
       console.error("API Error:", err);
-      const errorMsg = err.message || '抱歉，无法获取回复，请稍后再试。';
+      const errorMsg = err.message || 'Sorry, could not get a reply. Please try again later.';
       setError(errorMsg);
       const errorTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
       const errorMessage = { role: 'assistant', content: errorMsg, timestamp: errorTime, isError: true };
@@ -159,7 +159,7 @@ function Chatbot() {
    const handleNewChat = useCallback(() => {
     const newId = generateId();
     const newConversation = {
-      name: `对话 ${Object.keys(allConversations).length + 1}`,
+      name: `Chat ${Object.keys(allConversations).length + 1}`,
       messages: [] // Start new chats with empty messages
     };
     setAllConversations(prev => ({ ...prev, [newId]: newConversation }));
@@ -207,7 +207,7 @@ function Chatbot() {
             } else {
                  // No chats left, create a new initial one with EMPTY messages
                  const newId = generateId();
-                 const initialConversation = { name: '新对话', messages: [] }; // Start with empty messages
+                 const initialConversation = { name: 'New Chat', messages: [] }; // Start with empty messages
                  setAllConversations({ [newId]: initialConversation });
                  setActiveConversationId(newId);
             }
@@ -229,7 +229,7 @@ function Chatbot() {
     const handleImportChat = useCallback((importedData) => {
       if (!importedData || typeof importedData !== 'object' || !importedData.name || !Array.isArray(importedData.messages)) {
         console.error("Invalid imported chat data format.", importedData);
-        setError("导入失败：文件格式无效。");
+        setError("Import failed: Invalid file format.");
         return;
       }
 
@@ -239,7 +239,7 @@ function Chatbot() {
       );
       if (!isValidMessages) {
           console.error("Invalid message structure in imported chat.", importedData.messages);
-          setError("导入失败：消息结构无效。");
+          setError("Import failed: Invalid message structure.");
           return;
       }
 
@@ -254,10 +254,10 @@ function Chatbot() {
         setActiveConversationId(newId); // Activate the newly imported chat
         setIsChatListVisible(false); // Close sidebar
         setError(null); // Clear any previous errors
-        alert(`对话 "${importedData.name}" 已成功导入！`);
+        alert(`Conversation "${importedData.name}" imported successfully!`);
       } catch (e) {
         console.error("Error importing chat:", e);
-        setError("导入对话时发生错误。");
+        setError("Error occurred while importing the conversation.");
       }
     }, []); // No dependencies needed as it uses the imported data directly
 
@@ -288,7 +288,7 @@ function Chatbot() {
                 <div className="messages-wrapper">
                     {isActiveChatEmpty ? (
                         <div className="empty-chat-placeholder">
-                            <h2>今天有什么可以帮你的吗？</h2>
+                            <h2>How can I help you today?</h2>
                         </div>
                     ) : (
                         <ChatMessages messages={currentMessages} isLoading={isLoading} />
@@ -309,4 +309,4 @@ function Chatbot() {
   );
 }
 
-export default Chatbot; 
+export default Chatbot;
