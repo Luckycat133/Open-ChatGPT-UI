@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useEffect } from 'react';
 // Import icons
 import { FaUpload, FaSearch, FaMicrophone, FaPaperPlane } from 'react-icons/fa';
 
@@ -6,13 +6,20 @@ function ChatInput({ newMessage, setNewMessage, isLoading, handleSendMessage }) 
   const fileInputRef = useRef(null); // Create a ref for the file input
   const textareaRef = useRef(null); // Ref for the textarea
 
+  // Auto-resize textarea height
+  useEffect(() => {
+    const textarea = textareaRef.current;
+    if (textarea) {
+      textarea.style.height = 'auto'; // Reset height
+      textarea.style.height = `${textarea.scrollHeight}px`; // Set to content height
+    }
+  }, [newMessage]);
+
   // Handle Enter key press (optional: Shift+Enter for newline)
   const handleKeyDown = (event) => {
-    if (event.key === 'Enter' && !event.shiftKey) {
-      event.preventDefault(); 
-      if (!isLoading && newMessage.trim().length > 0) { // Check if can send before sending
-        handleSendMessage();
-      }
+    if (event.key === 'Enter' && !event.shiftKey && !isLoading) {
+      event.preventDefault();
+      handleSendMessage();
     }
   };
 
@@ -70,7 +77,7 @@ function ChatInput({ newMessage, setNewMessage, isLoading, handleSendMessage }) 
           ref={textareaRef}
           rows="1" // Start with one row
           className="chat-input"
-          placeholder="Ask anything..."
+          placeholder="输入消息..." /* Ask anything... */
           value={newMessage}
           onChange={(e) => setNewMessage(e.target.value)}
           onKeyDown={handleKeyDown} // Handle Enter key press
@@ -84,7 +91,7 @@ function ChatInput({ newMessage, setNewMessage, isLoading, handleSendMessage }) 
           </button> */}
           <button
             className={`action-button send-button ${!canSend ? 'disabled' : ''}`} // Add disabled class for styling
-            title="Send"
+            title="发送" /* Send */
             onClick={handleSendMessage} // Trigger send on click
             disabled={!canSend} // Disable if loading or input is empty/whitespace only
           >

@@ -145,22 +145,20 @@ function ChatList({
         onChange={handleFileSelected}
       />
       <div className="chat-list-header">
-        <h3>Chat History</h3>
-        {/* Add New Chat Button */}
-        <button onClick={onNewChat} className="new-chat-button" title="New Chat">
+        <h3>聊天记录</h3>
+        <button onClick={onNewChat} className="new-chat-button" title="新建聊天">
           <FaPlus />
         </button>
-        {/* Add Import Button */}
-        <button onClick={handleImportClick} className="import-button" title="Import Chat (.json)">
+        <button onClick={handleImportClick} className="import-button" title="导入聊天 (.json)">
           <FaUpload />
         </button>
-        <button onClick={onClose} className="close-sidebar-button" title="Close Sidebar">
+        <button onClick={onClose} className="close-sidebar-button" title="关闭侧边栏">
           <FaTimes />
         </button>
       </div>
       <ul className="chat-list-ul">
         {sortedConversations.length === 0 ? (
-          <li className="chat-list-empty">No chat history</li>
+          <li className="chat-list-empty">无聊天记录</li>
         ) : (
           sortedConversations.map(({ id, name }) => (
             <li
@@ -174,13 +172,13 @@ function ChatList({
                     value={editText}
                     onChange={(e) => setEditText(e.target.value)}
                     onKeyDown={(e) => handleKeyDown(e, id)}
-                    autoFocus // Focus the input when editing starts
+                    autoFocus
                     className="rename-input"
                   />
-                  <button onClick={() => handleSaveEdit(id)} className="chat-item-button save" title="Save">
+                  <button onClick={() => handleSaveEdit(id)} className="chat-item-button save" title="保存">
                     <FaSave />
                   </button>
-                  <button onClick={handleCancelEdit} className="chat-item-button cancel" title="Cancel">
+                  <button onClick={handleCancelEdit} className="chat-item-button cancel" title="取消">
                     <FaTimes />
                   </button>
                 </>
@@ -190,16 +188,16 @@ function ChatList({
                     {name}
                   </span>
                   <div className="chat-item-actions">
-                    <button onClick={() => handleStartEdit(id, name)} className="chat-item-button edit" title="Rename">
+                    <button onClick={() => handleStartEdit(id, name)} className="chat-item-button edit" title="重命名">
                       <FaEdit />
                     </button>
-                    <button onClick={() => handleExport(id)} className="chat-item-button export" title="Export (JSON)">
+                    <button onClick={() => handleExport(id)} className="chat-item-button export" title="导出 (JSON)">
                       <FaDownload />
                     </button>
-                    <button onClick={() => handleShare(id)} className="chat-item-button share" title="Share (Copy Content)">
+                    <button onClick={() => handleShare(id)} className="chat-item-button share" title="分享 (复制内容)">
                       <FaShareAlt />
                     </button>
-                     <button onClick={() => onDeleteChat(id)} className="chat-item-button delete" title="Delete">
+                     <button onClick={() => onDeleteChat(id)} className="chat-item-button delete" title="删除">
                       <FaTrash />
                     </button>
                   </div>

@@ -46,26 +46,31 @@ if (useOpenRouter) {
 
 
 /**
- * Sends message history to the configured AI API.
+ * Sends message history to the configured AI API and handles potential streaming.
  * @param {Array<{role: string, content: string}>} messages - The conversation history.
  * @param {string} [modelOverride] - Optional model ID to override the default.
- * @returns {Promise<string>} - The AI's response content.
- * @throws {Error} If API is not configured or request fails.
+ * @param {function(string): void} [onChunk] - Callback function to handle incoming stream chunks.
+ * @param {function(): void} [onDone] - Callback function when the stream is finished.
+ * @param {function(Error): void} [onError] - Callback function for stream errors.
+ * @returns {Promise<string | void>} - If not streaming, returns the full response string. If streaming, returns void.
+ * @throws {Error} If API is not configured or non-stream request fails.
  */
-const sendMessage = async (messages, modelOverride) => {
+const sendMessage = async (messages, modelOverride, onChunk, onDone, onError) => {
     if (!apiConfigured) {
-        console.error("API call attempted but API is not configured.");
-        throw new Error("API is not configured. Please check your environment variables (.env file) and console logs.");
+        const error = new Error("API is not configured. Please check environment variables.");
+        if (onError) onError(error); else throw error;
+        return;
     }
 
-    // Use override if provided, otherwise use the default from .env or the fallback
     const selectedModel = modelOverride || DEFAULT_MODEL;
     console.log(`Sending message to model: ${selectedModel} via ${apiUrl}`);
+
+    const isStreaming = typeof onChunk === 'function';
 
     const body = JSON.stringify({
         model: selectedModel,
         messages: messages,
-        // stream: true, // Enable later for streaming responses
+        stream: isStreaming, // Set stream based on callback presence
     });
 
     try {
@@ -76,48 +81,92 @@ const sendMessage = async (messages, modelOverride) => {
         });
 
         if (!response.ok) {
-            // Attempt to read error details from the response body
             let errorData;
-            try {
-                errorData = await response.json();
-            } catch (e) {
-                // If response is not JSON or empty
-                errorData = { message: response.statusText || 'Failed to fetch' };
-            }
+            try { errorData = await response.json(); }
+            catch (e) { errorData = { message: response.statusText || 'Failed to fetch' }; }
             console.error("API Error Response:", { status: response.status, body: errorData });
-            // Construct a more informative error message
             let errorMessage = `API request failed with status ${response.status}.`;
-            if (errorData?.error?.message) {
-                errorMessage += ` Details: ${errorData.error.message}`;
-            } else if (errorData?.message) {
-                 errorMessage += ` Details: ${errorData.message}`;
-            } else if (typeof errorData === 'string') { // Handle plain text errors
-                errorMessage += ` Details: ${errorData}`;
+            if (errorData?.error?.message) errorMessage += ` Details: ${errorData.error.message}`;
+            else if (errorData?.message) errorMessage += ` Details: ${errorData.message}`;
+            else if (typeof errorData === 'string') errorMessage += ` Details: ${errorData}`;
+            const error = new Error(errorMessage);
+            if (onError && isStreaming) onError(error); else throw error;
+            return;
+        }
+
+        // Handle Streaming Response
+        if (isStreaming && response.body) {
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            let accumulatedContent = '';
+
+            reader.read().then(function processText({ done, value }) {
+                if (done) {
+                    console.log("Stream complete.");
+                    if (onDone) onDone();
+                    return;
+                }
+
+                const chunk = decoder.decode(value, { stream: true });
+                // Process potential Server-Sent Events (SSE) format from OpenRouter/OpenAI
+                const lines = chunk.split('\n');
+                for (const line of lines) {
+                    if (line.startsWith('data: ')) {
+                        const dataStr = line.substring(6);
+                        if (dataStr === '[DONE]') {
+                            // Stream finished signal
+                        } else {
+                            try {
+                                const data = JSON.parse(dataStr);
+                                const delta = data?.choices?.[0]?.delta?.content;
+                                if (delta) {
+                                    accumulatedContent += delta;
+                                    onChunk(delta); // Send only the new chunk
+                                }
+                            } catch (e) {
+                                console.error("Error parsing stream data line:", line, e);
+                                // Don't stop the stream for one bad line, maybe?
+                                if(onError) onError(new Error(`Error parsing stream data: ${e.message}`))
+                            }
+                        }
+                    }
+                }
+
+                // Continue reading
+                reader.read().then(processText).catch(streamError => {
+                    console.error("Stream reading error:", streamError);
+                    if (onError) onError(streamError);
+                    if (onDone) onDone(); // Ensure onDone is called even on error
+                });
+            }).catch(initialReadError => {
+                 console.error("Initial stream read error:", initialReadError);
+                 if(onError) onError(initialReadError);
+                 if (onDone) onDone();
+            });
+            
+            return; // Return void for streaming calls
+
+        } else if (!isStreaming) {
+             // Handle Non-Streaming Response (as before)
+            const data = await response.json();
+            const content = data?.choices?.[0]?.message?.content;
+            if (content === undefined || content === null) {
+                console.error("Invalid API response format - missing content:", data);
+                throw new Error("Received an invalid or empty response format from the API.");
             }
-            throw new Error(errorMessage);
+            return content.trim();
         }
 
-        // If response is OK, proceed to parse JSON
-        const data = await response.json();
-
-        // Extract the response content (using optional chaining for safety)
-        const content = data?.choices?.[0]?.message?.content;
-
-        if (content === undefined || content === null) {
-             console.error("Invalid API response format - missing content:", data);
-            throw new Error("Received an invalid or empty response format from the API.");
-        }
-        return content.trim(); // Trim whitespace from response
-
-    } catch (error) {
-        console.error("Error during sendMessage fetch:", error);
-        // Re-throw the error with potentially more context or keep original
-        throw error instanceof Error ? error : new Error('An unknown error occurred during the API call.');
+    } catch (err) {
+        console.error("API Fetch/Stream Error:", err);
+        if (onError && isStreaming) onError(err); 
+        else if (!isStreaming) throw err; // Re-throw non-streaming errors
+        if (onDone && isStreaming) onDone(); // Ensure onDone on fetch errors too
     }
 };
 
 export default {
     sendMessage,
-    isApiConfigured: () => apiConfigured, // Export a function to check configuration status
-    DEFAULT_MODEL // Export the default model ID
+    isApiConfigured: () => apiConfigured,
+    DEFAULT_MODEL
 }; 

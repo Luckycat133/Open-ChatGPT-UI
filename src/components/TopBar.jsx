@@ -4,14 +4,14 @@ import { FaHistory, FaLock, FaUnlock, FaChevronDown, FaCheck } from 'react-icons
 // Import DEFAULT_MODEL from api.js
 import api from '../api';
 
-// Define model descriptions
+// Define model descriptions (Free Tier removed)
 const modelDescriptions = {
-  'deepseek/deepseek-chat-v3-0324:free': 'DeepSeek V3 Chat (0324 Snapshot, Free Tier) - General conversation model.',
-  'deepseek/deepseek-r1:free': 'DeepSeek R1 (Free Tier) - Specific details needed.',
-  'deepseek/deepseek-chat:free': 'DeepSeek Chat (Latest, Free Tier) - General conversation model.',
-  'deepseek/deepseek-r1-distill-llama-70b:free': 'DeepSeek R1 (Llama 70B Distill, Free Tier) - Distilled from Llama 70B.',
-  'deepseek/deepseek-r1-distill-qwen-32b:free': 'DeepSeek R1 (Qwen 32B Distill, Free Tier) - Distilled from Qwen 32B.',
-  'deepseek/deepseek-r1-distill-qwen-14b:free': 'DeepSeek R1 (Qwen 14B Distill, Free Tier) - Distilled from Qwen 14B.',
+  'deepseek/deepseek-chat-v3-0324:free': 'DeepSeek V3 Chat (0324 Snapshot) - General conversation model.',
+  'deepseek/deepseek-r1:free': 'DeepSeek R1 - Specific details needed.',
+  'deepseek/deepseek-chat:free': 'DeepSeek Chat (Latest) - General conversation model.',
+  'deepseek/deepseek-r1-distill-llama-70b:free': 'DeepSeek R1 (Llama 70B Distill) - Distilled from Llama 70B.',
+  'deepseek/deepseek-r1-distill-qwen-32b:free': 'DeepSeek R1 (Qwen 32B Distill) - Distilled from Qwen 32B.',
+  'deepseek/deepseek-r1-distill-qwen-14b:free': 'DeepSeek R1 (Qwen 14B Distill) - Distilled from Qwen 14B.',
   // Add description for the default model if needed and different
   ...(api.DEFAULT_MODEL && !{
     'deepseek/deepseek-chat-v3-0324:free': true,
@@ -81,7 +81,7 @@ function TopBar({ onNewChat, selectedModel, onModelChange, onToggleChatList }) {
     <div className="top-bar">
       {/* Left section - only sidebar toggle */}
       <div className="top-left">
-        <button className="icon-button sidebar-toggle-button" title="Toggle chat history" onClick={onToggleChatList}>
+        <button className="icon-button sidebar-toggle-button" title="切换聊天记录" onClick={onToggleChatList}>
             <FaHistory />
         </button>
       </div>
@@ -93,7 +93,7 @@ function TopBar({ onNewChat, selectedModel, onModelChange, onToggleChatList }) {
              className="dropdown-button-custom"
              onClick={() => setIsModelDropdownOpen(!isModelDropdownOpen)}
            >
-             <span>{selectedModelName}</span>
+             <span>{selectedModelName || '选择模型'}</span>
              <FaChevronDown className={`dropdown-arrow ${isModelDropdownOpen ? 'open' : ''}`} />
            </button>
            {/* Apply 'open' class when isModelDropdownOpen is true */}

@@ -1,6 +1,8 @@
 import React, { useRef, useEffect } from 'react';
 // Import icons
 import { FaExclamationTriangle, FaTrash, FaCopy, FaEdit, FaSyncAlt } from 'react-icons/fa';
+import ReactMarkdown from 'react-markdown'; // Import ReactMarkdown
+import remarkGfm from 'remark-gfm'; // Import remark-gfm for GitHub Flavored Markdown
 
 // Placeholder for AI/User avatar images - replace with actual paths or imports later
 const aiAvatarUrl = "https://via.placeholder.com/40/808080/FFFFFF?text=AI";
@@ -39,11 +41,8 @@ function ChatMessages({
 
   const handleCopy = (text) => {
       navigator.clipboard.writeText(text)
-          .then(() => console.log('Message copied!')) // Log to console instead of alert
-          .catch(err => {
-              console.error('Could not copy message content: ', err);
-              // Maybe provide a fallback or visual error cue here?
-          });
+          .then(() => console.log('消息已复制!')) // Message copied!
+          .catch(err => { console.error('无法复制消息内容: ', err); }); // Could not copy message content
   };
 
   // Handle keydown in edit input (Save on Enter, Cancel on Escape)
@@ -59,7 +58,7 @@ function ChatMessages({
   return (
     <>
       {messages.map((msg, index) => (
-        <div key={msg.timestamp + index}
+        <div key={msg.timestamp + index + msg.role}
              className={`message-container ${msg.role} ${msg.isError ? 'error-message-container' : ''} ${isLoading && index === messages.length - 1 ? 'last-message-loading' : ''}`}>
           {/* Check if current message is being edited */}
           {editingIndex === index ? (
@@ -73,39 +72,43 @@ function ChatMessages({
                     rows={3} // Start with a few rows, adjust as needed
                 />
                 <div className="message-edit-actions">
-                    <button onClick={onSaveEdit} className="edit-save-button">Save</button>
-                    <button onClick={onCancelEdit} className="edit-cancel-button">Cancel</button>
+                    {/* Apply unified button classes */}
+                    <button onClick={onSaveEdit} className="button-base button-primary edit-save-button">保存</button>
+                    <button onClick={onCancelEdit} className="button-base button-secondary edit-cancel-button">取消</button>
                 </div>
             </div>
           ) : (
             <>
               <div className="message-content">
-                  {/* Display model name for AI messages */} 
+                 {/* Corrected model display logic */}
                  {msg.role === 'assistant' && msg.model && (
-                     <div className="message-model-name">Model: {msg.model.split('/').pop().split(':')[0]}</div>
+                     <div className="message-model-name">模型: {msg.model.split('/').pop().split(':')[0]}</div>
                  )}
-                 <p>{msg.content}</p>
+                 {/* Use ReactMarkdown to render content */}
+                 <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                    {msg.content}
+                 </ReactMarkdown>
                  <span className="message-time">{msg.timestamp}</span>
                  {/* Replace emoji with icon */}
                  {msg.isError && <span className="error-indicator"><FaExclamationTriangle /></span>}
               </div>
+              {/* Message actions moved outside message-content for flexbox layout */}
               <div className="message-actions">
-                  <button onClick={() => handleCopy(msg.content)} title="Copy">
+                  {/* Ensure onClick handlers are correct */}
+                  <button onClick={() => handleCopy(msg.content)} title="复制"> {/* Copy */} 
                       <FaCopy />
                   </button>
-                  {/* Edit button only for user messages */}
                   {msg.role === 'user' && (
-                      <button onClick={() => onEditMessage(index, msg.content)} title="Edit">
+                      <button onClick={() => onEditMessage(index, msg.content)} title="编辑"> {/* Edit */} 
                           <FaEdit />
                       </button>
                   )}
-                  {/* Regenerate button only for AI messages */}
                   {msg.role === 'assistant' && !msg.isError && (
-                      <button onClick={() => onRegenerateResponse(index)} title="Regenerate">
+                      <button onClick={() => onRegenerateResponse(index)} title="重新生成"> {/* Regenerate */} 
                           <FaSyncAlt />
                       </button>
                   )}
-                  <button onClick={() => onDeleteMessage(index)} title="Delete">
+                  <button onClick={() => onDeleteMessage(index)} title="删除"> {/* Delete */} 
                       <FaTrash />
                   </button>
               </div>
@@ -117,10 +120,7 @@ function ChatMessages({
       {isLoading && (
          <div className="message-container ai loading-indicator">
             {/* <img src={aiAvatarUrl} alt="AI Avatar" className="avatar" /> */}
-            <div className="message-content">
-                 {/* Basic "Thinking..." text, you could replace with a CSS spinner */}
-                 <p className="thinking">...</p> 
-            </div>
+            <div className="message-content"> <p className="thinking">思考中...</p> </div> {/* Thinking... */} 
          </div>
       )}
       {/* Element to help scrolling to bottom */}

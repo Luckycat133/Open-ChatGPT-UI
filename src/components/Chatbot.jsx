@@ -49,7 +49,7 @@ function Chatbot() {
              } else {
                  // If no conversations exist, create an initial one with EMPTY messages
                  const newId = generateId();
-                 const initialConversation = { name: 'New Chat', messages: [] }; // Start with empty messages
+                 const initialConversation = { name: '新聊天', messages: [] }; // "New Chat"
                  setAllConversations({ [newId]: initialConversation });
                  setActiveConversationId(newId);
              }
@@ -64,7 +64,7 @@ function Chatbot() {
     // If no valid data loaded, create initial conversation with EMPTY messages
     console.log("No valid saved data found, creating initial conversation.");
     const newId = generateId();
-    const initialConversation = { name: 'New Chat', messages: [] }; // Start with empty messages
+    const initialConversation = { name: '新聊天', messages: [] }; // "New Chat"
     setAllConversations({ [newId]: initialConversation });
     setActiveConversationId(newId);
 
@@ -103,66 +103,119 @@ function Chatbot() {
     const currentTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
     const userMessage = { role: 'user', content: userMessageContent, timestamp: currentTime };
 
-    // Add user message to the active conversation
+    // Add user message and prepare history for API
+    const updatedMessagesWithUser = [...(allConversations[activeConversationId]?.messages || []), userMessage];
     setAllConversations(prev => ({
-      ...prev,
-      [activeConversationId]: {
-        ...prev[activeConversationId],
-        messages: [...prev[activeConversationId].messages, userMessage]
-      }
+        ...prev,
+        [activeConversationId]: { ...prev[activeConversationId], messages: updatedMessagesWithUser }
     }));
+    const historyForAPI = updatedMessagesWithUser.map(msg => ({ role: msg.role, content: msg.content }));
 
     setNewMessage('');
     setIsLoading(true);
     setError(null);
 
-    // Prepare message history for API using only the active conversation
-    const currentMessages = allConversations[activeConversationId]?.messages || [];
-    // Include the user message we just added for the API call context
-    const historyForAPI = [...currentMessages, userMessage].map(msg => ({ role: msg.role, content: msg.content }));
-
-    try {
-      // Pass the selected model to the API call
-      const aiResponseContent = await api.sendMessage(historyForAPI, selectedModel);
-      const aiTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
-      // Add model ID back for display
-      const aiMessage = { role: 'assistant', content: aiResponseContent, timestamp: aiTime, model: selectedModel };
-
-      // Add AI response to the active conversation
-      setAllConversations(prev => {
-        // Check if the conversation still exists (might have been deleted)
-        if (!prev[activeConversationId]) return prev;
+    // Add empty AI message placeholder for streaming
+    const placeholderTimestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+    const aiPlaceholderMessage = { 
+        role: 'assistant', 
+        content: '', // Start empty
+        timestamp: placeholderTimestamp, 
+        model: selectedModel, 
+        isStreaming: true // Add a flag for potential UI indication
+    };
+    setAllConversations(prev => {
+        if (!prev[activeConversationId]) return prev; // Check if convo exists
         return {
-          ...prev,
-          [activeConversationId]: {
-            ...prev[activeConversationId],
-            messages: [...prev[activeConversationId].messages, aiMessage]
-          }
-        };
-      });
-
-    } catch (err) {
-      console.error("API Error:", err);
-      const errorMsg = err.message || 'Sorry, could not get a reply. Please try again later.';
-      setError(errorMsg);
-      const errorTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
-      // Add model ID back to error
-      const errorMessage = { role: 'assistant', content: errorMsg, timestamp: errorTime, isError: true, model: selectedModel };
-
-       // Add error message to the active conversation
-       setAllConversations(prev => {
-         // Check if the conversation still exists
-         if (!prev[activeConversationId]) return prev;
-         return {
             ...prev,
-            [activeConversationId]: {
-              ...prev[activeConversationId],
-              messages: [...prev[activeConversationId].messages, errorMessage]
+            [activeConversationId]: { 
+                ...prev[activeConversationId], 
+                messages: [...prev[activeConversationId].messages, aiPlaceholderMessage] 
             }
-         };
-       });
-    } finally {
-      setIsLoading(false);
+        };
+    });
+
+    // Call API with stream handlers
+    try {
+        await api.sendMessage(
+            historyForAPI, 
+            selectedModel,
+            // onChunk callback
+            (chunk) => {
+                setAllConversations(prev => {
+                    if (!prev[activeConversationId]) return prev;
+                    const currentMessages = prev[activeConversationId].messages;
+                    const lastMessageIndex = currentMessages.length - 1;
+                    if (lastMessageIndex < 0 || currentMessages[lastMessageIndex].role !== 'assistant') {
+                        return prev; // Should not happen if placeholder was added correctly
+                    }
+                    const updatedLastMessage = {
+                        ...currentMessages[lastMessageIndex],
+                        content: currentMessages[lastMessageIndex].content + chunk
+                    };
+                    const updatedMessages = [...currentMessages.slice(0, lastMessageIndex), updatedLastMessage];
+                    return {
+                        ...prev,
+                        [activeConversationId]: { ...prev[activeConversationId], messages: updatedMessages }
+                    };
+                });
+            },
+            // onDone callback
+            () => {
+                setIsLoading(false);
+                 // Remove streaming flag from the final message
+                 setAllConversations(prev => {
+                     if (!prev[activeConversationId]) return prev;
+                     const currentMessages = prev[activeConversationId].messages;
+                     const lastMessageIndex = currentMessages.length - 1;
+                     if (lastMessageIndex >= 0 && currentMessages[lastMessageIndex].isStreaming) {
+                         const finalMessage = { ...currentMessages[lastMessageIndex], isStreaming: false };
+                         const updatedMessages = [...currentMessages.slice(0, lastMessageIndex), finalMessage];
+                         return { ...prev, [activeConversationId]: { ...prev[activeConversationId], messages: updatedMessages } };
+                     }
+                     return prev; // No change if last message wasn't streaming
+                 });
+            },
+            // onError callback
+            (streamError) => {
+                console.error("Streaming API Error:", streamError);
+                setError(streamError.message || 'Streaming failed.');
+                setIsLoading(false);
+                // Optionally update the placeholder message to show the error?
+                 setAllConversations(prev => {
+                     if (!prev[activeConversationId]) return prev;
+                     const currentMessages = prev[activeConversationId].messages;
+                     const lastMessageIndex = currentMessages.length - 1;
+                     if (lastMessageIndex >= 0 && currentMessages[lastMessageIndex].isStreaming) {
+                         const errorMessage = { 
+                             ...currentMessages[lastMessageIndex], 
+                             content: `Error: ${streamError.message || 'Streaming failed.'}`, 
+                             isError: true, 
+                             isStreaming: false 
+                         };
+                         const updatedMessages = [...currentMessages.slice(0, lastMessageIndex), errorMessage];
+                         return { ...prev, [activeConversationId]: { ...prev[activeConversationId], messages: updatedMessages } };
+                     }
+                     return prev;
+                 });
+            }
+        );
+    } catch (error) {
+        // This catch block might only catch initial setup errors from sendMessage now
+        console.error("Error setting up stream:", error);
+        setError(error.message || 'Failed to initiate response.');
+        setIsLoading(false);
+         // Remove the placeholder if setup failed
+         setAllConversations(prev => {
+             if (!prev[activeConversationId]) return prev;
+             const currentMessages = prev[activeConversationId].messages;
+             const lastMessageIndex = currentMessages.length - 1;
+             if (lastMessageIndex >= 0 && currentMessages[lastMessageIndex].isStreaming) {
+                 const updatedMessages = currentMessages.slice(0, lastMessageIndex);
+                 return { ...prev, [activeConversationId]: { ...prev[activeConversationId], messages: updatedMessages } };
+             }
+             return prev;
+         });
     }
   };
 
@@ -170,8 +223,8 @@ function Chatbot() {
    const handleNewChat = useCallback(() => {
     const newId = generateId();
     const newConversation = {
-      name: `Chat ${Object.keys(allConversations).length + 1}`,
-      messages: [] // Start new chats with empty messages
+      name: `聊天 ${Object.keys(allConversations).length + 1}`, // "Chat X"
+      messages: []
     };
     setAllConversations(prev => ({ ...prev, [newId]: newConversation }));
     setActiveConversationId(newId);
@@ -216,9 +269,8 @@ function Chatbot() {
                  const sortedRemainingIds = remainingIds.sort((a, b) => parseInt(b.split('_')[1]) - parseInt(a.split('_')[1]));
                  setActiveConversationId(sortedRemainingIds[0]);
             } else {
-                 // No chats left, create a new initial one with EMPTY messages
                  const newId = generateId();
-                 const initialConversation = { name: 'New Chat', messages: [] }; // Start with empty messages
+                 const initialConversation = { name: '新聊天', messages: [] }; // "New Chat"
                  setAllConversations({ [newId]: initialConversation });
                  setActiveConversationId(newId);
             }
@@ -265,10 +317,10 @@ function Chatbot() {
         setActiveConversationId(newId); // Activate the newly imported chat
         setIsChatListVisible(false); // Close sidebar
         setError(null); // Clear any previous errors
-        alert(`Conversation "${importedData.name}" imported successfully!`);
+        alert(`对话 "${importedData.name}" 导入成功!`); // Conversation X imported successfully!
       } catch (e) {
-        console.error("Error importing chat:", e);
-        setError("Error occurred while importing the conversation.");
+        console.error("导入聊天时出错:", e); // Error importing chat:
+        setError("导入对话时发生错误。" + e.message); // Error occurred while importing the conversation.
       }
     }, []); // No dependencies needed as it uses the imported data directly
 
@@ -375,15 +427,13 @@ function Chatbot() {
       { id: 'deepseek/deepseek-r1-distill-llama-70b:free', name: 'R1 Distill (Llama 70B)' },
       { id: 'deepseek/deepseek-r1-distill-qwen-32b:free', name: 'R1 Distill (Qwen 32B)' },
       { id: 'deepseek/deepseek-r1-distill-qwen-14b:free', name: 'R1 Distill (Qwen 14B)' },
-      { id: 'deepseek/deepseek-v3-base:free', name: 'DeepSeek V3 Base' },
        ...(api.DEFAULT_MODEL && ![
         'deepseek/deepseek-chat-v3-0324:free',
         'deepseek/deepseek-r1:free',
         'deepseek/deepseek-chat:free',
         'deepseek/deepseek-r1-distill-llama-70b:free',
         'deepseek/deepseek-r1-distill-qwen-32b:free',
-        'deepseek/deepseek-r1-distill-qwen-14b:free',
-        'deepseek/deepseek-v3-base:free'
+        'deepseek/deepseek-r1-distill-qwen-14b:free'
     ].includes(api.DEFAULT_MODEL)
         ? [{ id: api.DEFAULT_MODEL, name: `${api.DEFAULT_MODEL.split('/').pop().split(':')[0]} (Default)` }]
         : [])

@@ -15,7 +15,7 @@ function RegenerateModal({
     <div className="modal-backdrop">
       <div className="modal-content">
         <div className="modal-header">
-          <h4>Select Model for Regeneration</h4>
+          <h4>选择模型以重新生成</h4>
           <button onClick={onClose} className="modal-close-button">
             <FaTimes />
           </button>
