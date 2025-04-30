@@ -6,27 +6,55 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
-### Changed
-- Translated remaining Chinese comments and UI text to English to ensure English-first priority.
 ### Added
 - Implement message streaming functionality
 - Update default model to `deepseek/deepseek-chat` (`.env` configuration)
-
 ### Changed
+- Translated remaining Chinese comments and UI text to English to ensure English-first priority.
 - Optimize chat interface layout with 1280px max-width container (`src/index.css`)
 - Improve mobile sidebar interaction experience
 
 ### Fixed
 - Fix model selector dropdown display issue on mobile devices
 
-## [0.1.4] - 2024-04-28
-### Changed
-- Remove max-width constraints in `src/index.css` for full-width chat interface
+## [0.1.7] - 2025-04-29
+### Added
+- Model descriptions displayed below model names in the dropdown (`TopBar.jsx`, `index.css`).
+- Action buttons (Copy, Delete, Edit for user, Regenerate for AI) appear on message hover (`ChatMessages.jsx`, `Chatbot.jsx`, `index.css`).
+- Implemented inline editing for user messages.
+- Implemented Regenerate AI response functionality with model selection modal.
+- Display model name used for each AI response.
 
-## [0.1.3] - 2024-04-23
+### Changed
+- Changed copy button feedback from `alert` to `console.log` (`ChatMessages.jsx`).
+- Refined visual style for message action buttons.
+
+### Fixed
+- Re-implemented message action button functionality (Delete, Edit, Regenerate).
+- Ensured model descriptions are consistently visible in the dropdown.
+
+## [0.1.6] - 2025-04-29
+### Added
+- Model descriptions now appear as tooltips when hovering over models in the dropdown selector (`TopBar.jsx`, `index.css`).
 
 ### Changed
-- Removed max-width constraints in `src/index.css` to allow the chat interface to utilize the full window width.
+- Replaced previous DeepSeek models with a specific list of free OpenRouter DeepSeek models (`TopBar.jsx`).
+- Removed the separate model info button and its tooltip (`TopBar.jsx`, `index.css`).
+- Improved the visual style of the "New Chat" button in the chat list header (`index.css`).
+
+### Fixed
+- Addressed issue where the previous model info tooltip was not appearing on hover/click (by removing it).
+
+## [0.1.5] - 2025-04-29
+### Added
+- Added model information tooltip next to the model selector in the top bar (`TopBar.jsx`, `index.css`).
+
+### Changed
+- Updated available models to only include DeepSeek Chat and DeepSeek Coder (`TopBar.jsx`).
+
+### Fixed
+- Replaced SVG with `FaPlus` icon for the "New Chat" button in the chat list header (`ChatList.jsx`).
+- Fixed `ReferenceError: onNewChat is not defined` by adding the `onNewChat` prop to `ChatList` (`ChatList.jsx`).
 
 ## [0.1.2] - 2024-04-24
 ### Added
@@ -59,64 +87,3 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### Removed
 - Removed the "Private" toggle button and related logic from `TopBar.jsx`.
-
-### 2024-04-24 (Conversation Management)
-
-#### Added
-- **Conversation Management:**
-  - Implemented multi-conversation support.
-  - Added `ChatList` sidebar to view, select, rename, and delete conversations.
-  - Conversations are now persisted in browser `localStorage`.
-  - Added conversation export (as `.json` file) and import functionality.
-  - Added conversation sharing (copy text to clipboard).
-- **UI/UX:**
-  - Added `TopBar` button to toggle the `ChatList` sidebar visibility.
-  - Implemented responsive layout adjustments for desktop screens (sidebar pushes content) and mobile (sidebar overlays content).
-
-#### Changed
-- Refactored `Chatbot.jsx` to manage conversation state and `localStorage`.
-- Updated `TopBar.jsx` to handle model selection state via props and trigger sidebar toggle.
-- Updated `api.js` to export `DEFAULT_MODEL`.
-- Updated CSS (`index.css`) significantly for new layout, sidebar, and responsiveness.
-
-#### Removed
-- Removed static user/AI avatars from chat messages.
-- Removed the "Reason" (lightbulb icon) button from the input area.
-- Removed hardcoded model list from `TopBar.jsx`, now uses models defined in the component and `DEFAULT_MODEL` from `api.js`.
-
-## [0.1.1] - 2024-04-24
-### Added
-- Basic file selection functionality (logs selected file name to console).
-- Responsive design improvements using CSS media queries for better mobile layout.
-- Professional icons using `react-icons` library, replacing previous emoji/pseudo-element icons.
-
-### Changed
-- Updated `.env.example`:
-  - Prefixed frontend-accessible variables with `VITE_`.
-  - Added specific variables (`VITE_OPENAI_API_BASE_URL`, `VITE_OPENAI_API_KEY`) for configuring custom OpenAI-compatible endpoints.
-  - Added `VITE_DEFAULT_MODEL` variable for setting the default model.
-  - Improved comments for better clarity and ease of configuration.
-- Refined CSS for improved aesthetics (colors, spacing, loading indicator).
-
-### Fixed
-- Resolved issue where `src/index.css` was not found by Vite.
-- Corrected `package.json` to include standard Vite scripts (`dev`) and necessary React/Vite dependencies.
-
-## [0.1.0] - 2024-04-23
-
-### Added
-- Initial HTML structure and basic CSS for the AI chat interface (`index.html`).
-- Display of user and AI avatars in chat messages.
-- Display of timestamps for each chat message.
-- Environment variable support using `dotenv` package.
-- `.env.example` file to provide a template for necessary environment variables (e.g., API keys).
-- `.gitignore` file to exclude sensitive files (`.env`) and build artifacts (`node_modules`) from version control.
-- Basic React component structure (`App`, `Chatbot`, `ChatMessages`, `ChatInput`, `TopBar`, `api.js`).
-- Implemented core message sending/receiving logic (non-streaming).
-- Basic API configuration handling for OpenRouter and OpenAI-compatible endpoints in `api.js`.
-
-### Changed
-- Refined chat message styling for clearer visual separation and layout.
-
-### Security
-- Configured `.gitignore` to prevent accidental committing of the `.env` file containing API keys.

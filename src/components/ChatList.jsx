@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { FaEdit, FaTrash, FaDownload, FaShareAlt, FaSave, FaTimes, FaUpload } from 'react-icons/fa';
+import { FaEdit, FaTrash, FaDownload, FaShareAlt, FaSave, FaTimes, FaUpload, FaPlus } from 'react-icons/fa';
 
 // Helper function to format messages for export/sharing
 const formatMessagesForExport = (messages) => {
@@ -15,6 +15,7 @@ function ChatList({
   onRenameChat,
   onDeleteChat,
   onImportChat, // Receive the import handler
+  onNewChat, // Add this prop
   // TODO: Implement actual export/share logic if needed beyond basic copy/download
   // onExportChat,
   // onShareChat,
@@ -147,9 +148,7 @@ function ChatList({
         <h3>Chat History</h3>
         {/* Add New Chat Button */}
         <button onClick={onNewChat} className="new-chat-button" title="New Chat">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-          </svg>
+          <FaPlus />
         </button>
         {/* Add Import Button */}
         <button onClick={handleImportClick} className="import-button" title="Import Chat (.json)">

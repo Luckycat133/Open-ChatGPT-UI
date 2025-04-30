@@ -4,6 +4,25 @@ import { FaHistory, FaLock, FaUnlock, FaChevronDown, FaCheck } from 'react-icons
 // Import DEFAULT_MODEL from api.js
 import api from '../api';
 
+// Define model descriptions
+const modelDescriptions = {
+  'deepseek/deepseek-chat-v3-0324:free': 'DeepSeek V3 Chat (0324 Snapshot, Free Tier) - General conversation model.',
+  'deepseek/deepseek-r1:free': 'DeepSeek R1 (Free Tier) - Specific details needed.',
+  'deepseek/deepseek-chat:free': 'DeepSeek Chat (Latest, Free Tier) - General conversation model.',
+  'deepseek/deepseek-r1-distill-llama-70b:free': 'DeepSeek R1 (Llama 70B Distill, Free Tier) - Distilled from Llama 70B.',
+  'deepseek/deepseek-r1-distill-qwen-32b:free': 'DeepSeek R1 (Qwen 32B Distill, Free Tier) - Distilled from Qwen 32B.',
+  'deepseek/deepseek-r1-distill-qwen-14b:free': 'DeepSeek R1 (Qwen 14B Distill, Free Tier) - Distilled from Qwen 14B.',
+  // Add description for the default model if needed and different
+  ...(api.DEFAULT_MODEL && !{
+    'deepseek/deepseek-chat-v3-0324:free': true,
+    'deepseek/deepseek-r1:free': true,
+    'deepseek/deepseek-chat:free': true,
+    'deepseek/deepseek-r1-distill-llama-70b:free': true,
+    'deepseek/deepseek-r1-distill-qwen-32b:free': true,
+    'deepseek/deepseek-r1-distill-qwen-14b:free': true
+  }[api.DEFAULT_MODEL] ? { [api.DEFAULT_MODEL]: 'The default model configured via environment variables.' } : {}),
+};
+
 // Receive props from Chatbot
 function TopBar({ onNewChat, selectedModel, onModelChange, onToggleChatList }) {
   // Local state for dropdown visibility and privacy toggle
@@ -17,21 +36,25 @@ function TopBar({ onNewChat, selectedModel, onModelChange, onToggleChatList }) {
     setIsModelDropdownOpen(false); // Close dropdown after selection
   };
 
-  // Define a more realistic list of available models
-  // Ideally, this list might also come from api.js or be fetched dynamically
+  // Define the list of available DeepSeek models
   const availableModels = [
-    { id: 'openai/gpt-4o', name: 'GPT-4o (OpenAI)' },
-    { id: 'openai/gpt-4-turbo', name: 'GPT-4 Turbo (OpenAI)' },
-    { id: 'openai/gpt-3.5-turbo', name: 'GPT-3.5 Turbo (OpenAI)' },
-    { id: 'anthropic/claude-3.5-sonnet', name: 'Claude 3.5 Sonnet (Anthropic)' },
-    { id: 'anthropic/claude-3-opus', name: 'Claude 3 Opus (Anthropic)' },
-    { id: 'anthropic/claude-3-haiku', name: 'Claude 3 Haiku (Anthropic)' },
-    { id: 'google/gemini-pro-1.5', name: 'Gemini Pro 1.5 (Google)' },
-    { id: 'google/gemini-flash-1.5', name: 'Gemini Flash 1.5 (Google)' },
-     // Add the default model if it's not already in the list, using its ID as name if needed
-     ...(api.DEFAULT_MODEL && !['openai/gpt-4o', 'openai/gpt-4-turbo', 'openai/gpt-3.5-turbo', 'anthropic/claude-3.5-sonnet', 'anthropic/claude-3-opus', 'anthropic/claude-3-haiku', 'google/gemini-pro-1.5', 'google/gemini-flash-1.5'].includes(api.DEFAULT_MODEL)
-         ? [{ id: api.DEFAULT_MODEL, name: `${api.DEFAULT_MODEL} (Default)` }]
-         : [])
+    { id: 'deepseek/deepseek-chat-v3-0324:free', name: 'DeepSeek Chat V3 (0324)' },
+    { id: 'deepseek/deepseek-r1:free', name: 'DeepSeek R1' },
+    { id: 'deepseek/deepseek-chat:free', name: 'DeepSeek Chat (Latest)' },
+    { id: 'deepseek/deepseek-r1-distill-llama-70b:free', name: 'R1 Distill (Llama 70B)' },
+    { id: 'deepseek/deepseek-r1-distill-qwen-32b:free', name: 'R1 Distill (Qwen 32B)' },
+    { id: 'deepseek/deepseek-r1-distill-qwen-14b:free', name: 'R1 Distill (Qwen 14B)' },
+    // Add the default model from api.js if it's different and not already included
+    ...(api.DEFAULT_MODEL && ![
+      'deepseek/deepseek-chat-v3-0324:free',
+      'deepseek/deepseek-r1:free',
+      'deepseek/deepseek-chat:free',
+      'deepseek/deepseek-r1-distill-llama-70b:free',
+      'deepseek/deepseek-r1-distill-qwen-32b:free',
+      'deepseek/deepseek-r1-distill-qwen-14b:free'
+    ].includes(api.DEFAULT_MODEL)
+        ? [{ id: api.DEFAULT_MODEL, name: `${api.DEFAULT_MODEL.split('/').pop().split(':')[0]} (Default)` }] // Simplified default name
+        : [])
   ].filter((model, index, self) => // Ensure unique models by ID
       index === self.findIndex((m) => m.id === model.id)
   );
@@ -73,20 +96,26 @@ function TopBar({ onNewChat, selectedModel, onModelChange, onToggleChatList }) {
              <span>{selectedModelName}</span>
              <FaChevronDown className={`dropdown-arrow ${isModelDropdownOpen ? 'open' : ''}`} />
            </button>
-           {isModelDropdownOpen && (
-             <div className="model-dropdown-menu">
-                <ul>
-                {availableModels.map(model => (
+           {/* Apply 'open' class when isModelDropdownOpen is true */}
+           <div className={`model-dropdown-menu ${isModelDropdownOpen ? 'open' : ''}`}>
+              <ul>
+              {availableModels.map(model => (
                   <li key={model.id}>
                     <button onClick={() => handleModelChange(model.id)}>
-                       {model.name}
-                       {selectedModel === model.id && <FaCheck className="checkmark-icon" />} 
+                       <div className="model-dropdown-item-content">
+                           <div className="model-dropdown-name-check">
+                              <span className="model-name">{model.name}</span>
+                              {selectedModel === model.id && <FaCheck className="checkmark-icon" />}
+                           </div>
+                           <span className="model-description-text">
+                               {modelDescriptions[model.id] || 'No description available.'}
+                           </span>
+                       </div>
                     </button>
                   </li>
                 ))}
-              </ul>
-             </div>
-           )}
+            </ul>
+           </div>
          </div>
       </div>
 

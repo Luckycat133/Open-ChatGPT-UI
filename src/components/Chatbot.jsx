@@ -4,6 +4,7 @@ import ChatInput from './ChatInput';
 import TopBar from './TopBar'; // Assuming TopBar component will be created later
 import ChatList from './ChatList'; // Import the ChatList component
 import api from '../api'; // Assuming api.js will be created later
+import RegenerateModal from './RegenerateModal'; // Re-add import
 
 // Helper function to generate unique IDs (simple version)
 const generateId = () => `chat_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
@@ -20,6 +21,14 @@ function Chatbot() {
   // Add state for selected model (will be passed down from TopBar eventually)
   const [selectedModel, setSelectedModel] = useState(api.DEFAULT_MODEL);
   const [isChatListVisible, setIsChatListVisible] = useState(true); // State for sidebar visibility (Default to true for desktop)
+
+  // Re-add State for editing messages
+  const [editingIndex, setEditingIndex] = useState(null);
+  const [editText, setEditText] = useState('');
+
+  // Re-add State for Regenerate Modal
+  const [isRegenModalOpen, setIsRegenModalOpen] = useState(false);
+  const [regenTargetIndex, setRegenTargetIndex] = useState(null);
 
   // --- Local Storage Effects ---
   useEffect(() => {
@@ -116,7 +125,8 @@ function Chatbot() {
       // Pass the selected model to the API call
       const aiResponseContent = await api.sendMessage(historyForAPI, selectedModel);
       const aiTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
-      const aiMessage = { role: 'assistant', content: aiResponseContent, timestamp: aiTime };
+      // Add model ID back for display
+      const aiMessage = { role: 'assistant', content: aiResponseContent, timestamp: aiTime, model: selectedModel };
 
       // Add AI response to the active conversation
       setAllConversations(prev => {
@@ -136,7 +146,8 @@ function Chatbot() {
       const errorMsg = err.message || 'Sorry, could not get a reply. Please try again later.';
       setError(errorMsg);
       const errorTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
-      const errorMessage = { role: 'assistant', content: errorMsg, timestamp: errorTime, isError: true };
+      // Add model ID back to error
+      const errorMessage = { role: 'assistant', content: errorMsg, timestamp: errorTime, isError: true, model: selectedModel };
 
        // Add error message to the active conversation
        setAllConversations(prev => {
@@ -261,9 +272,122 @@ function Chatbot() {
       }
     }, []); // No dependencies needed as it uses the imported data directly
 
+  // --- Re-add Message Action Handlers ---
+  const handleDeleteMessage = useCallback((indexToDelete) => {
+      if (!activeConversationId || !allConversations[activeConversationId]) return;
+      setAllConversations(prev => {
+          const activeConvo = prev[activeConversationId];
+          if (!activeConvo?.messages) return prev;
+          const updatedMessages = activeConvo.messages.filter((_, index) => index !== indexToDelete);
+          return { ...prev, [activeConversationId]: { ...activeConvo, messages: updatedMessages } };
+      });
+   }, [activeConversationId, allConversations]);
+
+   const handleEditMessageStart = useCallback((indexToEdit, currentContent) => {
+       setEditingIndex(indexToEdit);
+       setEditText(currentContent);
+   }, []);
+
+   const handleSaveEdit = useCallback(() => {
+       if (editingIndex === null || !activeConversationId || !allConversations[activeConversationId]) return;
+       setAllConversations(prev => {
+            const activeConvo = prev[activeConversationId];
+            if (!activeConvo?.messages?.[editingIndex]) return prev;
+            const updatedMessages = [...activeConvo.messages];
+            updatedMessages[editingIndex] = { ...updatedMessages[editingIndex], content: editText };
+            return { ...prev, [activeConversationId]: { ...activeConvo, messages: updatedMessages } };
+       });
+       handleCancelEdit();
+   }, [editingIndex, editText, activeConversationId, allConversations]);
+
+   const handleCancelEdit = useCallback(() => {
+        setEditingIndex(null);
+        setEditText('');
+   }, []);
+
+    const handleRegenerateResponse = useCallback((indexToRegenerate) => {
+        setRegenTargetIndex(indexToRegenerate);
+        setIsRegenModalOpen(true);
+    }, []);
+
+    const executeRegeneration = async (selectedRegenModel) => {
+      setIsRegenModalOpen(false);
+      if (regenTargetIndex === null || !activeConversationId || !allConversations[activeConversationId]) return;
+      const activeConvo = allConversations[activeConversationId];
+      if (!activeConvo?.messages || regenTargetIndex >= activeConvo.messages.length || regenTargetIndex === 0) {
+          console.error("Invalid index for regeneration:", regenTargetIndex);
+          setError("Failed to regenerate: Invalid message index.");
+          setRegenTargetIndex(null);
+          return;
+      }
+      const userMessageIndex = regenTargetIndex - 1;
+      if (userMessageIndex < 0 || activeConvo.messages[userMessageIndex].role !== 'user') {
+           console.error("Could not find preceding user message.");
+           setError("Failed to regenerate: Context error.");
+           setRegenTargetIndex(null);
+           return;
+      }
+      const historyForAPI = activeConvo.messages.slice(0, userMessageIndex + 1).map(msg => ({ role: msg.role, content: msg.content }));
+
+      setIsLoading(true);
+      setError(null);
+
+      setAllConversations(prev => {
+          const updatedMessages = prev[activeConversationId].messages.filter((_, index) => index !== regenTargetIndex);
+          return { ...prev, [activeConversationId]: { ...prev[activeConversationId], messages: updatedMessages } };
+      });
+
+      try {
+          const aiResponseContent = await api.sendMessage(historyForAPI, selectedRegenModel);
+          const aiTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+          const aiMessage = { role: 'assistant', content: aiResponseContent, timestamp: aiTime, model: selectedRegenModel };
+          setAllConversations(prev => {
+              const currentMessages = prev[activeConversationId]?.messages || [];
+              const finalMessages = [...currentMessages.slice(0, regenTargetIndex), aiMessage, ...currentMessages.slice(regenTargetIndex)];
+              return { ...prev, [activeConversationId]: { ...prev[activeConversationId], messages: finalMessages } };
+          });
+      } catch (err) {
+          console.error("API Error during regeneration:", err);
+          const errorMsg = err.message || 'Sorry, could not regenerate the reply.';
+          setError(errorMsg);
+          const errorTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+          const errorMessage = { role: 'assistant', content: errorMsg, timestamp: errorTime, isError: true, model: selectedRegenModel };
+          setAllConversations(prev => {
+              const currentMessages = prev[activeConversationId]?.messages || [];
+              const finalMessages = [...currentMessages.slice(0, regenTargetIndex), errorMessage, ...currentMessages.slice(regenTargetIndex)];
+              return { ...prev, [activeConversationId]: { ...prev[activeConversationId], messages: finalMessages } };
+          });
+      } finally {
+          setIsLoading(false);
+          setRegenTargetIndex(null);
+      }
+  };
+
   // --- Render Logic ---
   const currentMessages = allConversations[activeConversationId]?.messages || [];
   const isActiveChatEmpty = currentMessages.length === 0;
+
+  // Re-add model list definition for the modal
+  const availableModelsForModal = [
+      { id: 'deepseek/deepseek-chat-v3-0324:free', name: 'DeepSeek Chat V3 (0324)' },
+      { id: 'deepseek/deepseek-r1:free', name: 'DeepSeek R1' },
+      { id: 'deepseek/deepseek-chat:free', name: 'DeepSeek Chat (Latest)' },
+      { id: 'deepseek/deepseek-r1-distill-llama-70b:free', name: 'R1 Distill (Llama 70B)' },
+      { id: 'deepseek/deepseek-r1-distill-qwen-32b:free', name: 'R1 Distill (Qwen 32B)' },
+      { id: 'deepseek/deepseek-r1-distill-qwen-14b:free', name: 'R1 Distill (Qwen 14B)' },
+      { id: 'deepseek/deepseek-v3-base:free', name: 'DeepSeek V3 Base' },
+       ...(api.DEFAULT_MODEL && ![
+        'deepseek/deepseek-chat-v3-0324:free',
+        'deepseek/deepseek-r1:free',
+        'deepseek/deepseek-chat:free',
+        'deepseek/deepseek-r1-distill-llama-70b:free',
+        'deepseek/deepseek-r1-distill-qwen-32b:free',
+        'deepseek/deepseek-r1-distill-qwen-14b:free',
+        'deepseek/deepseek-v3-base:free'
+    ].includes(api.DEFAULT_MODEL)
+        ? [{ id: api.DEFAULT_MODEL, name: `${api.DEFAULT_MODEL.split('/').pop().split(':')[0]} (Default)` }]
+        : [])
+  ].filter((model, index, self) => index === self.findIndex((m) => m.id === model.id));
 
   return (
     <div className="chat-container-wrapper">
@@ -276,6 +400,7 @@ function Chatbot() {
             onRenameChat={handleRenameChat}
             onDeleteChat={handleDeleteChat}
             onImportChat={handleImportChat}
+            onNewChat={handleNewChat}
         />
         <div className="chat-container">
             <TopBar
@@ -291,7 +416,18 @@ function Chatbot() {
                             <h2>How can I help you today?</h2>
                         </div>
                     ) : (
-                        <ChatMessages messages={currentMessages} isLoading={isLoading} />
+                        <ChatMessages
+                            messages={currentMessages}
+                            isLoading={isLoading}
+                            onDeleteMessage={handleDeleteMessage}
+                            onEditMessage={handleEditMessageStart}
+                            onRegenerateResponse={handleRegenerateResponse}
+                            editingIndex={editingIndex}
+                            editText={editText}
+                            onEditTextChange={setEditText}
+                            onSaveEdit={handleSaveEdit}
+                            onCancelEdit={handleCancelEdit}
+                        />
                     )}
                 </div>
             </div>
@@ -305,6 +441,16 @@ function Chatbot() {
             </div>
             {error && <div className="error-message">{error}</div>}
         </div>
+        <RegenerateModal
+            isOpen={isRegenModalOpen}
+            onClose={() => {
+                setIsRegenModalOpen(false);
+                setRegenTargetIndex(null);
+            }}
+            availableModels={availableModelsForModal}
+            onModelSelect={executeRegeneration}
+            currentSelectedModel={selectedModel}
+        />
     </div>
   );
 }
